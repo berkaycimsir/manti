@@ -1,4 +1,4 @@
-# PostgreSQL Database Manager UI - Project Roadmap
+# Manti - Project Roadmap
 
 ## Project Overview
 A modern web-based PostgreSQL Database Manager with user authentication, connection management, table visualization, SQL editing, and query history tracking.
