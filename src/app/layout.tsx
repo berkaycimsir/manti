@@ -1,5 +1,7 @@
 import "~/styles/globals.css";
 
+import { StackProvider, StackTheme } from "@stackframe/stack";
+import { stackClientApp } from "../stack/client";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 
@@ -21,9 +23,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
 	return (
 		<html lang="en" className={`${geist.variable}`}>
-			<body>
+			<body><StackProvider app={stackClientApp}><StackTheme>
 				<TRPCReactProvider>{children}</TRPCReactProvider>
-			</body>
+			</StackTheme></StackProvider></body>
 		</html>
 	);
 }
