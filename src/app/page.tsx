@@ -1,8 +1,10 @@
 import { ArrowRight, Database } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import ToggleThemeButton from "~/components/toggle-theme-button";
 import { Button } from "~/components/ui/button";
+import { stackServerApp } from "~/stack/server";
 
 const features = [
 	{
@@ -20,7 +22,9 @@ const features = [
 	},
 ];
 
-export default function Home() {
+export default async function LandingPage() {
+	if (await stackServerApp.getUser()) redirect("/home");
+
 	return (
 		<main className="min-h-screen bg-background text-foreground">
 			{/* Navigation */}

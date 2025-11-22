@@ -20,7 +20,10 @@
 					}
 				}
 			},
-			"recommended": true
+			"recommended": true,
+			"suspicious": {
+				"noExplicitAny": "off"
+			}
 		}
 	}
 }
