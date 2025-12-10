@@ -169,7 +169,9 @@ export default function DatabaseInspectionPage() {
 													size="sm"
 													onClick={(e) => {
 														e.stopPropagation();
-														setSelectedTable(table.name);
+														router.push(
+															`/home/${dbname}/${encodeURIComponent(table.name)}`,
+														);
 													}}
 												>
 													View
