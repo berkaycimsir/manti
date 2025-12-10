@@ -39,6 +39,9 @@ export const databaseConnections = createTable(
     database: text('database'),
     // Additional connection options
     ssl: boolean('ssl').default(false),
+    sslMode: text('ssl_mode', {
+      enum: ['disable', 'prefer', 'require', 'verify-full'],
+    }).default('disable'),
     isActive: boolean('is_active').default(false),
     // Track when the connection was last used (for idle timeout)
     lastUsedAt: timestamp('last_used_at', { mode: 'date' }),

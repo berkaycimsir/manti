@@ -157,7 +157,13 @@ class DatabaseConnectionPool {
         ? decryptSensitiveData(connectionConfig.password)
         : '';
 
-      connectionString = `postgresql://${connectionConfig.username}:${password}@${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}`;
+      // Build SSL query parameter based on sslMode
+      const sslParam =
+        connectionConfig.sslMode && connectionConfig.sslMode !== 'disable'
+          ? `?sslmode=${connectionConfig.sslMode}`
+          : '';
+
+      connectionString = `postgresql://${connectionConfig.username}:${password}@${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}${sslParam}`;
     }
 
     return new Pool({

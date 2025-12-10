@@ -151,6 +151,39 @@ export async function getTableRowCount(
 }
 
 /**
+ * Get table data with pagination
+ */
+export async function getTableData(
+  db: Kysely<any>,
+  tableName: string,
+  schemaName = 'public',
+  limit = 100,
+  offset = 0
+): Promise<{ rows: Array<Record<string, unknown>>; totalCount: number }> {
+  // Get total count first
+  const countResult = await sql<{ count: string | number }>`
+    SELECT COUNT(*) as count FROM ${sql.id(schemaName)}.${sql.id(tableName)}
+  `.execute(db);
+
+  const totalCount =
+    typeof countResult.rows[0]?.count === 'string'
+      ? Number.parseInt(countResult.rows[0].count, 10)
+      : countResult.rows[0]?.count ?? 0;
+
+  // Get paginated rows
+  const result = await sql<Record<string, unknown>>`
+    SELECT * FROM ${sql.id(schemaName)}.${sql.id(tableName)}
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `.execute(db);
+
+  return {
+    rows: result.rows as Array<Record<string, unknown>>,
+    totalCount,
+  };
+}
+
+/**
  * Test database connection
  */
 export async function testConnection(db: Kysely<any>): Promise<boolean> {
