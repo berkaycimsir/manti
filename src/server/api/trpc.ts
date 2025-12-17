@@ -6,12 +6,12 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
-import superjson from "superjson";
-import { ZodError } from "zod";
+import { initTRPC } from '@trpc/server';
+import superjson from 'superjson';
+import { ZodError } from 'zod';
 
-import { db } from "~/server/db";
-import { stackServerApp } from "~/stack/server";
+import { db } from '~/server/db';
+import { stackServerApp } from '~/stack/server';
 
 /**
  * 1. CONTEXT
@@ -26,12 +26,12 @@ import { stackServerApp } from "~/stack/server";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-	const user = await stackServerApp.getUser();
-	return {
-		db,
-		user,
-		...opts,
-	};
+  const user = await stackServerApp.getUser();
+  return {
+    db,
+    user,
+    ...opts,
+  };
 };
 
 /**
@@ -42,17 +42,17 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
  * errors on the backend.
  */
 const t = initTRPC.context<typeof createTRPCContext>().create({
-	transformer: superjson,
-	errorFormatter({ shape, error }) {
-		return {
-			...shape,
-			data: {
-				...shape.data,
-				zodError:
-					error.cause instanceof ZodError ? error.cause.flatten() : null,
-			},
-		};
-	},
+  transformer: superjson,
+  errorFormatter({ shape, error }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.cause instanceof ZodError ? error.cause.flatten() : null,
+      },
+    };
+  },
 });
 
 /**
@@ -89,13 +89,13 @@ export const publicProcedure = t.procedure;
  * Protected procedure - requires Stack authentication
  */
 export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
-	if (!ctx.user) {
-		throw new Error("Unauthorized");
-	}
-	return next({
-		ctx: {
-			...ctx,
-			userId: ctx.user.id,
-		},
-	});
+  if (!ctx.user) {
+    throw new Error('Unauthorized');
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      userId: ctx.user.id,
+    },
+  });
 });
