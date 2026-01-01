@@ -1,262 +1,206 @@
-import type { Kysely, RawBuilder } from 'kysely';
-import { sql } from 'kysely';
-import { db } from '~/server/db';
-import { databaseConnections } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
+import type { Kysely } from "kysely";
+import { sql } from "kysely";
+import type { SystemSchema } from "./system-schema";
 
 export interface Table {
-  name: string;
-  schema: string;
+	name: string;
+	schema: string;
 }
 
 export interface Column {
-  name: string;
-  type: string;
-  nullable: boolean;
-  default?: string;
+	name: string;
+	type: string;
+	nullable: boolean;
+	default?: string;
 }
 
 export interface QueryResult {
-  rows: Array<Record<string, unknown>>;
-  rowCount: number;
-  command?: string;
+	rows: Array<Record<string, unknown>>;
+	rowCount: number;
+	command?: string;
 }
 
 /**
  * Get all tables in a database
  */
 export async function getTables(db: Kysely<any>): Promise<Table[]> {
-  const result = await sql<{ tablename: string; schemaname: string }>`
-    SELECT tablename, schemaname 
-    FROM pg_tables 
-    WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-    ORDER BY schemaname, tablename
-  `.execute(db);
+	const sysDb = db as unknown as Kysely<SystemSchema>;
+	const result = await sysDb
+		.selectFrom("pg_catalog.pg_tables")
+		.select(["tablename", "schemaname"])
+		.where("schemaname", "not in", ["pg_catalog", "information_schema"])
+		.orderBy("schemaname")
+		.orderBy("tablename")
+		.execute();
 
-  return result.rows.map((row) => ({
-    name: row.tablename,
-    schema: row.schemaname,
-  }));
+	return result.map((row) => ({
+		name: row.tablename,
+		schema: row.schemaname,
+	}));
 }
 
 /**
  * Get columns for a specific table
  */
 export async function getTableColumns(
-  db: Kysely<any>,
-  tableName: string,
-  schemaName = 'public'
+	db: Kysely<any>,
+	tableName: string,
+	schemaName = "public",
 ): Promise<Column[]> {
-  const result = await sql<{
-    column_name: string;
-    data_type: string;
-    is_nullable: string;
-    column_default: string | null;
-  }>`
-    SELECT 
-      column_name,
-      data_type,
-      is_nullable,
-      column_default
-    FROM information_schema.columns
-    WHERE table_schema = ${schemaName} AND table_name = ${tableName}
-    ORDER BY ordinal_position
-  `.execute(db);
+	const sysDb = db as unknown as Kysely<SystemSchema>;
+	const result = await sysDb
+		.selectFrom("information_schema.columns")
+		.select(["column_name", "data_type", "is_nullable", "column_default"])
+		.where("table_schema", "=", schemaName)
+		.where("table_name", "=", tableName)
+		.orderBy("ordinal_position")
+		.execute();
 
-  return result.rows.map((row) => ({
-    name: row.column_name,
-    type: row.data_type,
-    nullable: row.is_nullable === 'YES',
-    default: row.column_default ?? undefined,
-  }));
+	return result.map((row) => ({
+		name: row.column_name,
+		type: row.data_type,
+		nullable: row.is_nullable === "YES",
+		default: row.column_default ?? undefined,
+	}));
 }
 
 /**
  * Execute a custom SQL query
  */
 export async function executeQuery(
-  db: Kysely<any>,
-  query: string
+	db: Kysely<any>,
+	query: string,
 ): Promise<QueryResult> {
-  try {
-    const result = await sql.raw(query).execute(db);
+	try {
+		const result = await sql.raw(query).execute(db);
 
-    if (Array.isArray(result.rows)) {
-      return {
-        rows: result.rows as Array<Record<string, unknown>>,
-        rowCount: result.rows.length,
-        command: 'SELECT',
-      };
-    }
+		if (Array.isArray(result.rows)) {
+			return {
+				rows: result.rows as Array<Record<string, unknown>>,
+				rowCount: result.rows.length,
+				command: "SELECT",
+			};
+		}
 
-    // For non-SELECT queries (INSERT, UPDATE, DELETE, etc.)
-    return {
-      rows: [],
-      rowCount: result?.numAffectedRows ? Number(result.numAffectedRows) : 0,
-      command: query.trim().split(/\s+/)[0]?.toUpperCase() ?? 'UNKNOWN',
-    };
-  } catch (error) {
-    throw new Error(
-      `Query execution failed: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`
-    );
-  }
+		// For non-SELECT queries (INSERT, UPDATE, DELETE, etc.)
+		return {
+			rows: [],
+			rowCount: result?.numAffectedRows ? Number(result.numAffectedRows) : 0,
+			command: query.trim().split(/\s+/)[0]?.toUpperCase() ?? "UNKNOWN",
+		};
+	} catch (error) {
+		throw new Error(
+			`Query execution failed: ${
+				error instanceof Error ? error.message : "Unknown error"
+			}`,
+		);
+	}
 }
 
 /**
  * Get all schemas in a database
  */
 export async function getSchemas(db: Kysely<any>): Promise<string[]> {
-  const result = await sql<{ schema_name: string }>`
-    SELECT schema_name 
-    FROM information_schema.schemata
-    WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_internal')
-    ORDER BY schema_name
-  `.execute(db);
+	const sysDb = db as unknown as Kysely<SystemSchema>;
+	const result = await sysDb
+		.selectFrom("information_schema.schemata")
+		.select("schema_name")
+		.where("schema_name", "not in", [
+			"pg_catalog",
+			"information_schema",
+			"pg_internal",
+		])
+		.orderBy("schema_name")
+		.execute();
 
-  return result.rows.map((row) => row.schema_name);
+	return result.map((row) => row.schema_name);
 }
 
 /**
  * Get table size in bytes
  */
 export async function getTableSize(
-  db: Kysely<any>,
-  tableName: string,
-  schemaName = 'public'
+	db: Kysely<any>,
+	tableName: string,
+	schemaName = "public",
 ): Promise<number> {
-  const result = await sql<{ size: string | number }>`
-    SELECT pg_total_relation_size(${`"${schemaName}"."${tableName}"`}) as size
+	// Use bound parameters for safety instead of raw string injection
+	const result = await sql<{ size: string | number }>`
+    SELECT pg_total_relation_size(quote_ident(${schemaName}) || '.' || quote_ident(${tableName})) as size
   `.execute(db);
 
-  const size = result.rows[0]?.size;
-  return typeof size === 'string' ? Number.parseInt(size, 10) : size ?? 0;
+	const size = result.rows[0]?.size;
+	return typeof size === "string"
+		? Number.parseInt(size, 10)
+		: Number(size ?? 0);
 }
 
 /**
  * Get row count for a table
  */
-export async function getTableRowCount(
-  db: Kysely<any>,
-  tableName: string,
-  schemaName = 'public'
-): Promise<number> {
-  const result = await sql<{ count: string | number }>`
-    SELECT COUNT(*) as count FROM ${sql.table(`${schemaName}.${tableName}`)}
-  `.execute(db);
 
-  const count = result.rows[0]?.count;
-  return typeof count === 'string' ? Number.parseInt(count, 10) : count ?? 0;
+export async function getTableRowCount(
+	db: Kysely<any>,
+	tableName: string,
+	schemaName = "public",
+): Promise<number> {
+	const result = await db
+		.withSchema(schemaName)
+		.selectFrom(tableName)
+		.select(db.fn.countAll<string | number>().as("count"))
+		.executeTakeFirst();
+
+	const count = result?.count;
+	return typeof count === "string"
+		? Number.parseInt(count, 10)
+		: Number(count ?? 0);
 }
 
 /**
  * Get table data with pagination
  */
 export async function getTableData(
-  db: Kysely<any>,
-  tableName: string,
-  schemaName = 'public',
-  limit = 100,
-  offset = 0
+	db: Kysely<any>,
+	tableName: string,
+	schemaName = "public",
+	limit = 100,
+	offset = 0,
 ): Promise<{ rows: Array<Record<string, unknown>>; totalCount: number }> {
-  // Get total count first
-  const countResult = await sql<{ count: string | number }>`
-    SELECT COUNT(*) as count FROM ${sql.id(schemaName)}.${sql.id(tableName)}
-  `.execute(db);
+	// Get total count first using builder
+	const countResult = await db
+		.withSchema(schemaName)
+		.selectFrom(tableName)
+		.select(db.fn.countAll<string | number>().as("count"))
+		.executeTakeFirst();
 
-  const totalCount =
-    typeof countResult.rows[0]?.count === 'string'
-      ? Number.parseInt(countResult.rows[0].count, 10)
-      : countResult.rows[0]?.count ?? 0;
+	const totalCount =
+		typeof countResult?.count === "string"
+			? Number.parseInt(countResult.count, 10)
+			: Number(countResult?.count ?? 0);
 
-  // Get paginated rows
-  const result = await sql<Record<string, unknown>>`
-    SELECT * FROM ${sql.id(schemaName)}.${sql.id(tableName)}
-    LIMIT ${limit}
-    OFFSET ${offset}
-  `.execute(db);
+	// Get paginated rows using builder
+	const rows = await db
+		.withSchema(schemaName)
+		.selectFrom(tableName)
+		.selectAll()
+		.limit(limit)
+		.offset(offset)
+		.execute();
 
-  return {
-    rows: result.rows as Array<Record<string, unknown>>,
-    totalCount,
-  };
+	return {
+		rows: rows as Array<Record<string, unknown>>,
+		totalCount,
+	};
 }
 
 /**
  * Test database connection
  */
 export async function testConnection(db: Kysely<any>): Promise<boolean> {
-  try {
-    await sql`SELECT 1`.execute(db);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Mark a database connection as inactive
- */
-export async function markConnectionAsInactive(
-  connectionId: number
-): Promise<void> {
-  try {
-    await db
-      .update(databaseConnections)
-      .set({ isActive: false, lastUsedAt: null })
-      .where(eq(databaseConnections.id, connectionId));
-
-    console.log(
-      `[QueryUtils] Successfully marked connection ${connectionId} as inactive`
-    );
-  } catch (error) {
-    console.error(
-      `[QueryUtils] Failed to mark connection ${connectionId} as inactive:`,
-      error
-    );
-    throw error;
-  }
-}
-
-/**
- * Update the lastUsedAt timestamp for a connection
- */
-export async function updateConnectionLastUsed(
-  connectionId: number
-): Promise<void> {
-  try {
-    await db
-      .update(databaseConnections)
-      .set({ lastUsedAt: new Date(), isActive: true })
-      .where(eq(databaseConnections.id, connectionId));
-  } catch (error) {
-    console.error(
-      `[QueryUtils] Failed to update lastUsedAt for connection ${connectionId}:`,
-      error
-    );
-    // Don't throw - this is not critical
-  }
-}
-
-/**
- * Get the lastUsedAt timestamp for a connection
- */
-export async function getConnectionLastUsed(
-  connectionId: number
-): Promise<Date | null> {
-  try {
-    const result = await db
-      .select({ lastUsedAt: databaseConnections.lastUsedAt })
-      .from(databaseConnections)
-      .where(eq(databaseConnections.id, connectionId));
-
-    return result[0]?.lastUsedAt ?? null;
-  } catch (error) {
-    console.error(
-      `[QueryUtils] Failed to get lastUsedAt for connection ${connectionId}:`,
-      error
-    );
-    return null;
-  }
+	try {
+		await sql`SELECT 1`.execute(db);
+		return true;
+	} catch {
+		return false;
+	}
 }

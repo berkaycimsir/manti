@@ -94,7 +94,7 @@ export default async function LandingPage() {
 					</div>
 
 					<div className="grid gap-8 md:grid-cols-3">
-						{features.map((feature, i) => (
+						{features.map((feature, _i) => (
 							<div
 								key={feature.title}
 								className="rounded-lg border border-border bg-background p-6 transition-colors hover:bg-card/50"

@@ -1,4 +1,4 @@
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -18,7 +18,7 @@ export function formatRelativeTime(date: Date | null | undefined): string {
 	const diffMins = Math.floor(diffSecs / 60);
 	const diffHours = Math.floor(diffMins / 60);
 	const diffDays = Math.floor(diffHours / 24);
-	const diffWeeks = Math.floor(diffDays / 7);
+	const _diffWeeks = Math.floor(diffDays / 7);
 
 	if (diffMins < 1) return "just now";
 	if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`;

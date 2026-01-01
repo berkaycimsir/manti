@@ -1,9 +1,13 @@
 # Manti - Project Roadmap
 
+- Satirlarin yuksekliginin/genisligini degistirilebilmesi. 3. gorunum sekli JSON ekle, nizami olsun/olmasin, belirli text goster. query sonuclarinda tab gosterimi. sidebar - selectable databases, daha sonra databasein detaylari asagida gozuksun
+
 ## Project Overview
+
 A modern web-based PostgreSQL Database Manager with user authentication, connection management, table visualization, SQL editing, and query history tracking.
 
 **Tech Stack:**
+
 - Frontend: Next.js (App Router)
 - Backend: tRPC with Node.js
 - Backend: tRPC integrated into Next.js (mounted on Next.js API routes / App Router handlers — no separate server)
@@ -18,27 +22,32 @@ A modern web-based PostgreSQL Database Manager with user authentication, connect
 ## Phase 1: Project Setup & Infrastructure (Week 1-2)
 
 ### 1.1 Initialize Next.js Project
+
 - [ ] Create Next.js 14+ project with App Router
 - [ ] Configure TypeScript
 - [ ] Set up Tailwind CSS
 - [ ] Set up ESLint and Prettier
 
 ### 1.2 Database Setup
+
 - [ ] Set up PostgreSQL for application data (users, connections, queries, history)
 - [ ] Initialize Drizzle ORM
 - [ ] Create initial database schema
 
 ### 1.3 Backend Architecture
+
 - [ ] Set up tRPC with Next.js App Router
 - [ ] Configure tRPC middleware (logging, error handling)
 - [ ] Set up environment variables (.env.local)
 
 Notes on integration
+
 - The backend will run inside the Next.js server — do NOT create a separate Express/Fastify/standalone Node server.
 - Use the official Next adapter (e.g. @trpc/next) or mount your tRPC router in an App Router route at `/app/api/trpc/route.ts` (or `/pages/api/trpc.ts` for Pages Router). This keeps all server code inside Next's process and deployment model.
 - Design the tRPC context and handlers to be serverless-friendly if you plan to deploy to Vercel or other serverless platforms. Keep heavy long-lived connections (if any) managed via connection pooling and within appropriate lifecycle hooks.
 
 ### 1.4 Authentication Setup
+
 - [ ] Implement Better-Auth
 - [ ] Configure authentication providers (email/password)
 - [ ] Set up session management
@@ -49,6 +58,7 @@ Notes on integration
 ## Phase 2: Authentication & User Management (Week 2-3)
 
 ### 2.1 Login/Signup Pages
+
 - [ ] Design and build Signup page with form validation
 - [ ] Design and build Login page with form validation
 - [ ] Implement password reset flow
@@ -56,11 +66,13 @@ Notes on integration
 - [ ] Create Protected routes/layout
 
 ### 2.2 User Profile
+
 - [ ] Create user profile page
 - [ ] Implement profile update functionality
 - [ ] Add user settings page
 
 ### 2.3 Schema Design for Auth Data
+
 ```sql
 -- Users table (managed by Better-Auth)
 -- Sessions table (managed by Better-Auth)
@@ -72,13 +84,16 @@ Notes on integration
 ## Phase 3: Database Connection Management (Week 3-4)
 
 ### 3.1 Connection Schema Design
+
 **Database Schema:**
+
 - [ ] Create `connections` table
   - id, userId, name, host, port, username, password (encrypted), database, url, createdAt, updatedAt
 - [ ] Create `connection_metadata` table for caching connection info
 - [ ] Implement encryption for sensitive credentials
 
 ### 3.2 Connection UI Components
+
 - [ ] Create "Add New Connection" modal/page
 - [ ] Build connection form with:
   - [ ] Connection name
@@ -95,6 +110,7 @@ Notes on integration
   - [ ] Connect button
 
 ### 3.3 Backend tRPC Procedures
+
 - [ ] `connection.create` - Create new connection
 - [ ] `connection.update` - Update connection
 - [ ] `connection.delete` - Delete connection
@@ -103,6 +119,7 @@ Notes on integration
 - [ ] `connection.getById` - Get specific connection
 
 ### 3.4 Connection Encryption
+
 - [ ] Implement credential encryption/decryption
 - [ ] Set up secure credential storage
 
@@ -111,18 +128,21 @@ Notes on integration
 ## Phase 4: Database Connection & Query Execution (Week 4-5)
 
 ### 4.1 Database Connection Handler
+
 - [ ] Create database connection pool manager
 - [ ] Implement connection caching
 - [ ] Handle connection errors gracefully
 - [ ] Create connection lifecycle management
 
 ### 4.2 Query Execution Engine
+
 - [ ] Create query execution service
 - [ ] Implement query timeout handling
 - [ ] Add query result pagination
 - [ ] Handle different data types properly
 
 ### 4.3 tRPC Procedures for Query Execution
+
 - [ ] `database.query` - Execute raw SQL query
 - [ ] `database.getTables` - Get list of tables
 - [ ] `database.getTableSchema` - Get table structure
@@ -134,12 +154,14 @@ Notes on integration
 ## Phase 5: Table Management & Visualization (Week 5-7)
 
 ### 5.1 Table List Component
+
 - [ ] Display tables from connected database
 - [ ] Add search/filter functionality
 - [ ] Implement table grouping by schema
 - [ ] Add table icons and descriptions
 
 ### 5.2 Table Data Viewer
+
 - [ ] Create main data grid component
 - [ ] Implement pagination
 - [ ] Add sorting functionality
@@ -148,6 +170,7 @@ Notes on integration
 - [ ] Add row selection
 
 ### 5.3 Multiple View Options
+
 - [ ] **Grid View** - Traditional table view
 - [ ] **Card View** - Card-based layout for records
 - [ ] **JSON View** - JSON representation of data
@@ -155,6 +178,7 @@ Notes on integration
 - [ ] **Chart/Analytics View** (optional)
 
 ### 5.4 Table Management Operations
+
 - [ ] Create table
 - [ ] Rename table
 - [ ] Delete table (with confirmation)
@@ -162,6 +186,7 @@ Notes on integration
 - [ ] Export table data (CSV, JSON)
 
 ### 5.5 Schema Design for Query History
+
 - [ ] Create `saved_queries` table
   - id, userId, connectionId, title, query, createdAt, updatedAt
 - [ ] Create `query_history` table
@@ -172,6 +197,7 @@ Notes on integration
 ## Phase 6: SQL Editor & Query Management (Week 7-8)
 
 ### 6.1 SQL Editor Component
+
 - [ ] Integrate Monaco Editor or CodeMirror
 - [ ] Add SQL syntax highlighting
 - [ ] Implement query execution button
@@ -179,6 +205,7 @@ Notes on integration
 - [ ] Implement keyboard shortcuts (Ctrl+Enter to execute)
 
 ### 6.2 Query Execution UI
+
 - [ ] Display query results in formatted table
 - [ ] Show execution time and row count
 - [ ] Add download results button (CSV, JSON)
@@ -186,12 +213,14 @@ Notes on integration
 - [ ] Add query cancel button for long-running queries
 
 ### 6.3 Query Saving
+
 - [ ] Implement "Save Query" functionality
 - [ ] Create saved queries management page
 - [ ] Add query tags/categories
 - [ ] Implement query search
 
 ### 6.4 Query History
+
 - [ ] Track all executed queries
 - [ ] Display query history with timestamps
 - [ ] Add ability to re-run historical queries
@@ -199,6 +228,7 @@ Notes on integration
 - [ ] Add history cleanup/export options
 
 ### 6.5 tRPC Procedures
+
 - [ ] `query.execute` - Execute SQL query
 - [ ] `query.save` - Save query
 - [ ] `query.getSavedQueries` - List saved queries
@@ -211,24 +241,28 @@ Notes on integration
 ## Phase 7: Row-Level Operations (Week 8-9)
 
 ### 7.1 Insert Operations
+
 - [ ] Create "Insert New Row" modal/form
 - [ ] Build dynamic form based on table schema
 - [ ] Implement form validation
 - [ ] Handle different data types (date, json, arrays, etc.)
 
 ### 7.2 Update Operations
+
 - [ ] Implement inline editing in grid view
 - [ ] Create edit modal for complex data
 - [ ] Add change preview before commit
 - [ ] Implement update validation
 
 ### 7.3 Delete Operations
+
 - [ ] Add delete row functionality
 - [ ] Implement confirmation dialog
 - [ ] Add bulk delete capability
 - [ ] Show affected rows count
 
 ### 7.4 tRPC Procedures
+
 - [ ] `rows.insert` - Insert new row
 - [ ] `rows.update` - Update existing row
 - [ ] `rows.delete` - Delete row
@@ -240,6 +274,7 @@ Notes on integration
 ## Phase 8: Advanced Features (Week 9-10)
 
 ### 8.1 Column Management
+
 - [ ] Add new column
 - [ ] Rename column
 - [ ] Change column type
@@ -247,12 +282,14 @@ Notes on integration
 - [ ] Create indexes
 
 ### 8.2 Data Export/Import
+
 - [ ] Export table as CSV
 - [ ] Export table as JSON
 - [ ] Export query results
 - [ ] Import CSV data into table
 
 ### 8.3 Database Statistics & Monitoring
+
 - [ ] Display database size
 - [ ] Show table sizes
 - [ ] Display connection info
@@ -260,12 +297,14 @@ Notes on integration
 - [ ] Database health indicators
 
 ### 8.4 Advanced Querying
+
 - [ ] Multi-table JOIN builder (visual query builder)
 - [ ] Subquery support
 - [ ] Aggregate functions visualization
 - [ ] GROUP BY clause builder
 
 ### 8.5 tRPC Procedures
+
 - [ ] `table.addColumn` - Add column
 - [ ] `table.renameColumn` - Rename column
 - [ ] `table.modifyColumn` - Modify column type
@@ -277,6 +316,7 @@ Notes on integration
 ## Phase 9: Performance & Optimization (Week 10-11)
 
 ### 9.1 Frontend Optimization
+
 - [ ] Implement virtual scrolling for large datasets
 - [ ] Add request debouncing
 - [ ] Optimize re-renders
@@ -284,12 +324,14 @@ Notes on integration
 - [ ] Add loading skeletons
 
 ### 9.2 Backend Optimization
+
 - [ ] Implement connection pooling
 - [ ] Add query result caching
 - [ ] Optimize database queries
 - [ ] Implement pagination limits
 
 ### 9.3 UI/UX Improvements
+
 - [ ] Add dark mode support
 - [ ] Implement responsive design
 - [ ] Add keyboard navigation
@@ -300,6 +342,7 @@ Notes on integration
 ## Phase 10: Testing & Deployment (Week 11-12)
 
 ### 10.1 Testing
+
 - [ ] Set up testing framework (Jest, Vitest)
 - [ ] Write unit tests for utilities
 - [ ] Write integration tests for tRPC procedures
@@ -307,6 +350,7 @@ Notes on integration
 - [ ] Test database operations
 
 ### 10.2 Security Review
+
 - [ ] SQL injection prevention (parameterized queries)
 - [ ] XSS prevention
 - [ ] CSRF protection
@@ -315,6 +359,7 @@ Notes on integration
 - [ ] Credential encryption review
 
 ### 10.3 Deployment Setup
+
 - [ ] Set up environment configurations
 - [ ] Configure database migrations
 - [ ] Set up CI/CD pipeline
@@ -490,6 +535,7 @@ postgers-ui-manager/
 ## Implementation Tips
 
 ### Security Best Practices
+
 1. **Credential Storage**: Always encrypt database credentials before storing
 2. **SQL Injection**: Use parameterized queries exclusively
 3. **Rate Limiting**: Implement on tRPC procedures
@@ -497,6 +543,7 @@ postgers-ui-manager/
 5. **Input Validation**: Validate all inputs with Zod
 
 ### Performance Considerations
+
 1. **Connection Pooling**: Use `pg` pool for efficient connection management
 2. **Query Pagination**: Limit default rows (50-100)
 3. **Caching**: Cache table schemas and statistics
@@ -504,6 +551,7 @@ postgers-ui-manager/
 5. **Debouncing**: Search, filter, and sort operations
 
 ### UX Enhancements
+
 1. Add keyboard shortcuts for common operations
 2. Implement undo/redo for edit operations
 3. Add loading states and progress indicators
@@ -513,6 +561,7 @@ postgers-ui-manager/
 ---
 
 ## Timeline Summary
+
 - **Week 1-2**: Setup & Infrastructure
 - **Week 2-3**: Authentication
 - **Week 3-4**: Connection Management
@@ -529,6 +578,7 @@ postgers-ui-manager/
 ---
 
 ## Next Steps
+
 1. Initialize the Next.js project
 2. Set up the database schema
 3. Configure Better-Auth

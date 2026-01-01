@@ -11,6 +11,12 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
+			"correctness": {
+				"noUnusedVariables": "warn",
+				"noUnusedImports": "warn",
+				"noUnusedFunctionParameters": "warn",
+				"useExhaustiveDependencies": "info"
+			},
 			"nursery": {
 				"useSortedClasses": {
 					"level": "warn",
@@ -22,7 +28,8 @@
 			},
 			"recommended": true,
 			"suspicious": {
-				"noExplicitAny": "off"
+				"noExplicitAny": "off",
+				"noArrayIndexKey": "off"
 			}
 		}
 	}

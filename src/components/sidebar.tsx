@@ -1,9 +1,9 @@
 "use client";
 
-import { Database, Plus, Settings, LogOut } from "lucide-react";
+import { Database, LogOut, PanelLeftClose, Plus, Settings } from "lucide-react";
 import Image from "next/image";
 import { Button } from "~/components/ui/button";
-import ToggleThemeButton from "~/components/toggle-theme-button";
+import { useLayoutStore } from "~/stores/layout-store";
 
 interface Connection {
 	id: number;
@@ -30,18 +30,24 @@ export default function Sidebar({
 	return (
 		<aside className="flex h-screen w-64 flex-col border-sidebar-border border-r bg-sidebar">
 			{/* Logo */}
-			<div className="border-sidebar-border border-b p-6">
+			{/* Logo */}
+			<div className="border-sidebar-border border-b p-4">
 				<div className="flex items-center justify-between gap-2">
 					<div className="flex items-center gap-2">
-						<Image
-							src="/manti.png"
-							alt="manti PostgreSQL interface"
-							width={36}
-							height={36}
-						/>
+						<Image src="/manti.png" alt="manti" width={28} height={28} />
 						<h1 className="font-bold text-lg text-sidebar-foreground">manti</h1>
 					</div>
-					<ToggleThemeButton />
+					<div className="flex items-center gap-1">
+						<Button
+							variant="ghost"
+							size="icon"
+							onClick={() => useLayoutStore.getState().hideLayout()}
+							className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
+							title="Hide Sidebar"
+						>
+							<PanelLeftClose className="h-4 w-4" />
+						</Button>
+					</div>
 				</div>
 			</div>
 
