@@ -8,8 +8,8 @@ import {
   RowsIcon,
   Save,
 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { AdvancedTableViewer } from '~/components/database/advanced-table-viewer';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
@@ -31,10 +31,12 @@ interface QueryResult {
   command?: string;
 }
 
-export default function NewQueryPage() {
+export default function QueryEditPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const dbname = params?.dbname as string;
+  const queryId = searchParams.get('id');
 
   const [queryName, setQueryName] = useState('');
   const [queryText, setQueryText] = useState('');
@@ -43,6 +45,13 @@ export default function NewQueryPage() {
   const [error, setError] = useState<string | null>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
+
+  // Redirect to new page if no queryId
+  useEffect(() => {
+    if (!queryId) {
+      router.replace(`/home/${dbname}/query/new`);
+    }
+  }, [queryId, dbname, router]);
 
   // Decode the connection ID from the dbname param
   const connectionId = Number.parseInt(dbname.split('-').pop() || '0', 10);
@@ -53,6 +62,33 @@ export default function NewQueryPage() {
 
   // Fetch tabs
   const { data: tabs = [] } = api.database.listTabs.useQuery({ connectionId });
+
+  // Fetch existing query
+  const { data: existingQuery, isLoading: isLoadingQuery } =
+    api.database.getSavedQuery.useQuery(
+      { id: Number(queryId) },
+      { enabled: !!queryId }
+    );
+
+  // Load existing query data
+  useEffect(() => {
+    if (existingQuery) {
+      setQueryName(existingQuery.name);
+      setQueryText(existingQuery.query);
+      if (existingQuery.tabId) {
+        setSelectedTabId(String(existingQuery.tabId));
+      } else {
+        setSelectedTabId('uncategorized');
+      }
+      if (existingQuery.lastResult) {
+        setResult({
+          rows: existingQuery.lastResult as Array<Record<string, unknown>>,
+          rowCount: existingQuery.rowCount ?? 0,
+        });
+        setExecutionTime(existingQuery.executionTimeMs ?? null);
+      }
+    }
+  }, [existingQuery]);
 
   const utils = api.useUtils();
 
@@ -66,30 +102,22 @@ export default function NewQueryPage() {
     }));
   }, [result]);
 
-  // Execute query mutation (without saving)
-  const executeQueryMutation = api.database.executeQuery.useMutation({
-    onSuccess: (data) => {
-      setResult(data);
-      setError(null);
-      setIsExecuting(false);
-    },
-    onError: (err) => {
-      setError(err.message);
-      setResult(null);
-      setIsExecuting(false);
+  // Update saved query mutation
+  const updateQueryMutation = api.database.updateSavedQuery.useMutation({
+    onSuccess: () => {
+      void utils.database.listSavedQueries.invalidate();
+      void utils.database.getSavedQuery.invalidate({ id: Number(queryId) });
     },
   });
 
-  // Execute and save mutation
-  const executeAndSaveMutation = api.database.executeAndSaveQuery.useMutation({
+  // Execute saved query mutation
+  const executeSavedQueryMutation = api.database.executeSavedQuery.useMutation({
     onSuccess: (data) => {
       setResult(data.result);
       setExecutionTime(data.executionTimeMs);
       setError(null);
       setIsExecuting(false);
       void utils.database.listSavedQueries.invalidate();
-      // Navigate to edit page after saving
-      router.push(`/home/${dbname}/query/edit?id=${data.id}`);
     },
     onError: (err) => {
       setError(err.message);
@@ -99,32 +127,43 @@ export default function NewQueryPage() {
   });
 
   const handleExecute = () => {
-    if (!queryText.trim()) return;
+    if (!queryText.trim() || !queryId) return;
     setIsExecuting(true);
     setError(null);
-    const startTime = Date.now();
 
-    executeQueryMutation.mutate(
-      { connectionId, query: queryText },
+    updateQueryMutation.mutate(
+      {
+        id: Number(queryId),
+        query: queryText,
+        name: queryName,
+        tabId: selectedTabId === 'uncategorized' ? null : Number(selectedTabId),
+      },
       {
         onSuccess: () => {
-          setExecutionTime(Date.now() - startTime);
+          executeSavedQueryMutation.mutate({ id: Number(queryId) });
         },
       }
     );
   };
 
   const handleSaveAndExecute = () => {
-    if (!queryText.trim() || !queryName.trim()) return;
+    if (!queryText.trim() || !queryName.trim() || !queryId) return;
     setIsExecuting(true);
     setError(null);
 
-    executeAndSaveMutation.mutate({
-      connectionId,
-      name: queryName,
-      query: queryText,
-      tabId: selectedTabId === 'uncategorized' ? null : Number(selectedTabId),
-    });
+    updateQueryMutation.mutate(
+      {
+        id: Number(queryId),
+        query: queryText,
+        name: queryName,
+        tabId: selectedTabId === 'uncategorized' ? null : Number(selectedTabId),
+      },
+      {
+        onSuccess: () => {
+          executeSavedQueryMutation.mutate({ id: Number(queryId) });
+        },
+      }
+    );
   };
 
   // Memoized header actions
@@ -197,19 +236,45 @@ export default function NewQueryPage() {
 
   // Register header
   useHeader({
-    title: 'New Query',
+    title: 'Edit Query',
     subtitle: `Connection: ${currentConnection?.name || `ID: ${connectionId}`}`,
     backHref: `/home/${dbname}/query`,
     actions: headerActions,
     floatingActions: floatingActions,
   });
 
-  // Track in recent pages
+  // Track in recent pages with query name
   useRecentPage({
-    title: 'New Query',
-    subtitle: 'Create',
+    title: existingQuery?.name || 'Query',
+    subtitle: 'Edit Query',
     icon: 'Code',
   });
+
+  if (!queryId) {
+    return null; // Will redirect
+  }
+
+  if (isLoadingQuery) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!existingQuery) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4">
+        <p className="text-muted-foreground">Query not found</p>
+        <Button
+          onClick={() => router.push(`/home/${dbname}/query`)}
+          variant="outline"
+        >
+          Go Back
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full">
@@ -291,7 +356,7 @@ export default function NewQueryPage() {
                 {result.rows.length > 0 ? (
                   <AdvancedTableViewer
                     dbName={dbname}
-                    tableName="query-editor-new"
+                    tableName={`query-editor-${queryId}`}
                     columns={columns}
                     rows={result.rows}
                     transformations={[]}
