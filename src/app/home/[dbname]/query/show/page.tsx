@@ -177,7 +177,6 @@ export default function QueryShowPage() {
                 rows={currentResult.rows}
                 transformations={[]}
                 filters={[]}
-                showTitle={false}
               />
             </div>
           ) : (

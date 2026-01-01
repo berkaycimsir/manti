@@ -1,203 +1,273 @@
-"use client";
+'use client';
 
-import { ChevronDown, ChevronRight, Table } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import {
-	ColumnsSkeleton,
-	TablesListSkeleton,
-} from "~/components/ui/content-skeletons";
-import { useLayoutStore } from "~/stores/layout-store";
-import { api } from "~/trpc/react";
+import { Table } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { TablePreviewDialog } from '~/components/database/tables/table-preview-dialog';
+import { SchemaGroup } from '~/components/database/tables/schema-group';
+import { TableCard } from '~/components/database/tables/table-card';
+import { TableRow } from '~/components/database/tables/table-row';
+import { TablesHeader } from '~/components/database/tables/tables-header';
+import { Card } from '~/components/ui/card';
+import { TablesListSkeleton } from '~/components/ui/content-skeletons';
+import { useTablesViewStore } from '~/stores/tables-view-store';
+import { api } from '~/trpc/react';
 
-interface TableCardProps {
-	table: { name: string; schema: string };
-	connectionId: number;
-	dbname: string;
-	isExpanded: boolean;
-	onToggle: () => void;
-}
-
-function TableCard({
-	table,
-	connectionId,
-	dbname,
-	isExpanded,
-	onToggle,
-}: TableCardProps) {
-	const router = useRouter();
-
-	// Fetch columns only when expanded
-	const { data: columns = [], isLoading: columnsLoading } =
-		api.database.getTableColumns.useQuery(
-			{ connectionId, tableName: table.name, schemaName: table.schema },
-			{ enabled: isExpanded && connectionId > 0 },
-		);
-
-	return (
-		<Card
-			className={`cursor-pointer p-6 transition-shadow hover:shadow-md ${
-				isExpanded ? "border-primary ring-1 ring-primary" : ""
-			}`}
-			onClick={onToggle}
-		>
-			<div className="mb-4 flex items-center justify-between">
-				<div className="flex items-center gap-3">
-					{isExpanded ? (
-						<ChevronDown className="h-5 w-5 text-muted-foreground" />
-					) : (
-						<ChevronRight className="h-5 w-5 text-muted-foreground" />
-					)}
-					<div>
-						<h3 className="font-semibold text-foreground text-lg">
-							{table.name}
-						</h3>
-						<p className="text-muted-foreground text-sm">
-							Schema: {table.schema}
-						</p>
-					</div>
-				</div>
-				<Button
-					variant="outline"
-					size="sm"
-					onClick={(e) => {
-						e.stopPropagation();
-						router.push(
-							`/home/${dbname}/${encodeURIComponent(
-								table.name,
-							)}?schema=${encodeURIComponent(table.schema)}`,
-						);
-					}}
-				>
-					View
-				</Button>
-			</div>
-
-			{isExpanded && columnsLoading ? (
-				<ColumnsSkeleton columns={4} />
-			) : isExpanded && columns.length > 0 ? (
-				<div className="overflow-x-auto">
-					<table className="w-full text-sm">
-						<thead>
-							<tr className="border-border border-b">
-								<th className="px-3 py-2 text-left font-medium text-foreground">
-									Column
-								</th>
-								<th className="px-3 py-2 text-left font-medium text-foreground">
-									Type
-								</th>
-								<th className="px-3 py-2 text-left font-medium text-foreground">
-									Nullable
-								</th>
-							</tr>
-						</thead>
-						<tbody>
-							{columns.map((column) => (
-								<tr
-									key={column.name}
-									className="border-border border-b hover:bg-muted/50"
-								>
-									<td className="px-3 py-2 font-mono text-foreground">
-										{column.name}
-									</td>
-									<td className="px-3 py-2 text-muted-foreground">
-										{column.type}
-									</td>
-									<td className="px-3 py-2">
-										<span
-											className={`rounded px-2 py-1 text-xs ${
-												column.nullable
-													? "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
-													: "bg-green-500/10 text-green-700 dark:text-green-400"
-											}`}
-										>
-											{column.nullable ? "Yes" : "No"}
-										</span>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-			) : null}
-		</Card>
-	);
+interface TableInfo {
+  name: string;
+  schema: string;
+  columnCount?: number;
 }
 
 export default function TablesPage() {
-	const params = useParams();
-	const dbname = params?.dbname as string;
-	const _isLayoutVisible = useLayoutStore((state) => state.isLayoutVisible);
+  const params = useParams();
+  const dbname = params?.dbname as string;
 
-	const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
+  // View store
+  const { viewMode, sortBy, sortOrder, groupBySchema } = useTablesViewStore();
 
-	// Decode the connection ID from the dbname param
-	const connectionId = Number.parseInt(dbname.split("-").pop() || "0", 10);
+  // Local state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSchema, setSelectedSchema] = useState('all');
+  const [mounted, setMounted] = useState(false);
 
-	// Fetch real tables from the database
-	const {
-		data: tables = [],
-		isLoading: tablesLoading,
-		error: tablesError,
-	} = api.database.getTables.useQuery(
-		{ connectionId },
-		{ enabled: connectionId > 0 },
-	);
+  // Wait for hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-	const toggleTable = (tableName: string) => {
-		setExpandedTables((prev) => {
-			const next = new Set(prev);
-			if (next.has(tableName)) {
-				next.delete(tableName);
-			} else {
-				next.add(tableName);
-			}
-			return next;
-		});
-	};
+  // Decode the connection ID from the dbname param
+  const connectionId = Number.parseInt(dbname.split('-').pop() || '0', 10);
 
-	if (tablesLoading) {
-		return <TablesListSkeleton tables={6} />;
-	}
+  // Fetch tables
+  const {
+    data: tables = [],
+    isLoading: tablesLoading,
+    error: tablesError,
+  } = api.database.getTables.useQuery(
+    { connectionId },
+    { enabled: connectionId > 0 }
+  );
 
-	if (tablesError) {
-		return (
-			<Card className="border-destructive/50 bg-destructive/5 p-6">
-				<p className="font-medium text-destructive">Error loading tables</p>
-				<p className="text-muted-foreground text-sm">
-					{tablesError instanceof Error
-						? tablesError.message
-						: "Failed to load tables"}
-				</p>
-			</Card>
-		);
-	}
+  // Fetch schemas
+  const { data: schemas = [] } = api.database.getSchemas.useQuery(
+    { connectionId },
+    { enabled: connectionId > 0 }
+  );
 
-	if (tables.length === 0) {
-		return (
-			<Card className="p-12 text-center">
-				<Table className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
-				<p className="text-muted-foreground">
-					No tables found in this database
-				</p>
-			</Card>
-		);
-	}
+  // Fetch columns for all tables (for column count)
+  const columnQueries = api.useQueries((t) =>
+    tables.map((table) =>
+      t.database.getTableColumns(
+        {
+          connectionId,
+          tableName: table.name,
+          schemaName: table.schema,
+        },
+        { enabled: tables.length > 0 && tables.length <= 50 }
+      )
+    )
+  );
 
-	return (
-		<div className="relative space-y-4">
-			{tables.map((table) => (
-				<TableCard
-					key={`${table.schema}.${table.name}`}
-					table={table}
-					connectionId={connectionId}
-					dbname={dbname}
-					isExpanded={expandedTables.has(table.name)}
-					onToggle={() => toggleTable(table.name)}
-				/>
-			))}
-		</div>
-	);
+  // Build tables with column counts
+  const tablesWithCounts: TableInfo[] = useMemo(() => {
+    return tables.map((table, index) => ({
+      ...table,
+      columnCount: columnQueries[index]?.data?.length,
+    }));
+  }, [tables, columnQueries]);
+
+  // Filter tables
+  const filteredTables = useMemo(() => {
+    let result = tablesWithCounts;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (table) =>
+          table.name.toLowerCase().includes(query) ||
+          table.schema.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by schema
+    if (selectedSchema !== 'all') {
+      result = result.filter((table) => table.schema === selectedSchema);
+    }
+
+    // Sort
+    result = [...result].sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'columns':
+          comparison = (a.columnCount ?? 0) - (b.columnCount ?? 0);
+          break;
+        case 'schema':
+          comparison = a.schema.localeCompare(b.schema);
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [tablesWithCounts, searchQuery, selectedSchema, sortBy, sortOrder]);
+
+  // Group tables by schema
+  const groupedTables = useMemo(() => {
+    if (!groupBySchema) return null;
+
+    const groups: Record<string, TableInfo[]> = {};
+    for (const table of filteredTables) {
+      if (!groups[table.schema]) {
+        groups[table.schema] = [];
+      }
+      groups[table.schema]?.push(table);
+    }
+    return groups;
+  }, [filteredTables, groupBySchema]);
+
+  // Preview state
+  const [previewTable, setPreviewTable] = useState<TableInfo | null>(null);
+
+  // Handle preview - open dialog
+  const handlePreview = (table: TableInfo) => {
+    setPreviewTable(table);
+  };
+
+  // Loading state
+  if (tablesLoading || !mounted) {
+    return (
+      <div className="p-6">
+        <TablesListSkeleton tables={6} />
+      </div>
+    );
+  }
+
+  // Error state
+  if (tablesError) {
+    return (
+      <div className="p-6">
+        <Card className="border-destructive/50 bg-destructive/5 p-6">
+          <p className="font-medium text-destructive">Error loading tables</p>
+          <p className="text-muted-foreground text-sm">
+            {tablesError instanceof Error
+              ? tablesError.message
+              : 'Failed to load tables'}
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (tables.length === 0) {
+    return (
+      <div className="p-6">
+        <Card className="p-12 text-center">
+          <Table className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
+          <p className="text-muted-foreground">
+            No tables found in this database
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col p-2">
+      {/* Header with Search and Controls */}
+      <TablesHeader
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        schemas={schemas}
+        selectedSchema={selectedSchema}
+        onSchemaChange={setSelectedSchema}
+        tableCount={filteredTables.length}
+      />
+
+      {/* Tables List */}
+      <div className="mt-6 flex-1 overflow-auto">
+        {filteredTables.length === 0 ? (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground">
+              No tables match your search criteria
+            </p>
+          </Card>
+        ) : groupBySchema && groupedTables ? (
+          // Grouped View
+          <div className="space-y-6">
+            {Object.entries(groupedTables)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([schema, schemaTables]) => (
+                <SchemaGroup
+                  key={schema}
+                  schema={schema}
+                  tableCount={schemaTables.length}
+                >
+                  {viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {schemaTables.map((table) => (
+                        <TableCard
+                          key={`${table.schema}.${table.name}`}
+                          table={table}
+                          dbname={dbname}
+                          onPreview={() => handlePreview(table)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {schemaTables.map((table) => (
+                        <TableRow
+                          key={`${table.schema}.${table.name}`}
+                          table={table}
+                          dbname={dbname}
+                          onPreview={() => handlePreview(table)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </SchemaGroup>
+              ))}
+          </div>
+        ) : viewMode === 'grid' ? (
+          // Grid View
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredTables.map((table) => (
+              <TableCard
+                key={`${table.schema}.${table.name}`}
+                table={table}
+                dbname={dbname}
+                onPreview={() => handlePreview(table)}
+              />
+            ))}
+          </div>
+        ) : (
+          // List View
+          <div className="space-y-2">
+            {filteredTables.map((table) => (
+              <TableRow
+                key={`${table.schema}.${table.name}`}
+                table={table}
+                dbname={dbname}
+                onPreview={() => handlePreview(table)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Table Preview Dialog */}
+      <TablePreviewDialog
+        isOpen={!!previewTable}
+        onClose={() => setPreviewTable(null)}
+        table={previewTable}
+        dbname={dbname}
+      />
+    </div>
+  );
 }

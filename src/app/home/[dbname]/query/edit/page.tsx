@@ -361,7 +361,6 @@ export default function QueryEditPage() {
                     rows={result.rows}
                     transformations={[]}
                     filters={[]}
-                    showTitle={false}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground">

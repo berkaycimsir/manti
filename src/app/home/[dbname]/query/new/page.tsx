@@ -8,8 +8,8 @@ import {
   RowsIcon,
   Save,
 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { AdvancedTableViewer } from '~/components/database/advanced-table-viewer';
 import { Button } from '~/components/ui/button';
 import { Card } from '~/components/ui/card';
@@ -34,15 +34,25 @@ interface QueryResult {
 export default function NewQueryPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const dbname = params?.dbname as string;
+  const prefill = searchParams.get('prefill');
+  const returnTo = searchParams.get('returnTo');
 
   const [queryName, setQueryName] = useState('');
-  const [queryText, setQueryText] = useState('');
+  const [queryText, setQueryText] = useState(prefill || '');
   const [selectedTabId, setSelectedTabId] = useState<string>('uncategorized');
   const [result, setResult] = useState<QueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [executionTime, setExecutionTime] = useState<number | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
+
+  // Handle prefill updates (e.g. if navigating within same page)
+  useEffect(() => {
+    if (prefill) {
+      setQueryText(prefill);
+    }
+  }, [prefill]);
 
   // Decode the connection ID from the dbname param
   const connectionId = Number.parseInt(dbname.split('-').pop() || '0', 10);
@@ -199,7 +209,7 @@ export default function NewQueryPage() {
   useHeader({
     title: 'New Query',
     subtitle: `Connection: ${currentConnection?.name || `ID: ${connectionId}`}`,
-    backHref: `/home/${dbname}/query`,
+    backHref: returnTo ? decodeURIComponent(returnTo) : `/home/${dbname}/query`,
     actions: headerActions,
     floatingActions: floatingActions,
   });
@@ -296,7 +306,6 @@ export default function NewQueryPage() {
                     rows={result.rows}
                     transformations={[]}
                     filters={[]}
-                    showTitle={false}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground">
