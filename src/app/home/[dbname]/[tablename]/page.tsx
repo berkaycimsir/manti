@@ -163,9 +163,6 @@ export default function TableDetailsPage() {
           </TabsList>
 
           <TableToolbar
-            totalRows={0} // Unused in current TableToolbar implementation
-            totalColumns={0} // Unused
-            selectedCount={0} // Unused
             globalSearch={searchQuery}
             onSearchChange={setSearchQuery}
             onExportCSV={() => tableRef.current?.exportCSV()}
