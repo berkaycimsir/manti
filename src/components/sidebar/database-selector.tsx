@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import { isLocalConnection, isProduction } from '~/lib/utils';
 
 interface Connection {
   id: number;
@@ -63,18 +64,33 @@ export function DatabaseSelector({
           </div>
         </SelectTrigger>
         <SelectContent>
-          {connections.map((connection) => (
-            <SelectItem key={connection.id} value={connection.id.toString()}>
-              <div className="flex flex-col">
-                <span className="font-medium">{connection.name}</span>
-                {connection.host && (
-                  <span className="text-muted-foreground text-xs">
-                    {connection.host}
-                  </span>
-                )}
-              </div>
-            </SelectItem>
-          ))}
+          {connections.map((connection) => {
+            const isRestricted =
+              isProduction() && isLocalConnection(connection.host);
+            return (
+              <SelectItem
+                key={connection.id}
+                value={connection.id.toString()}
+                disabled={isRestricted}
+              >
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{connection.name}</span>
+                    {isRestricted && (
+                      <span className="rounded bg-destructive/10 px-1 py-0.5 text-[10px] text-destructive uppercase">
+                        Local Only
+                      </span>
+                    )}
+                  </div>
+                  {connection.host && (
+                    <span className="block max-w-[150px] truncate font-mono text-muted-foreground text-xs">
+                      {connection.host}
+                    </span>
+                  )}
+                </div>
+              </SelectItem>
+            );
+          })}
           <SelectSeparator />
           <SelectItem value="manage" className="text-primary">
             <div className="flex items-center gap-2">

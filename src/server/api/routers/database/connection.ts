@@ -4,7 +4,10 @@ import { z } from 'zod';
 
 import { createTRPCRouter, protectedProcedure } from '~/server/api/trpc';
 import { connectionPool } from '~/server/db/connection-pool';
-import { getValidatedConnection } from '~/server/db/connection-utils';
+import {
+  getValidatedConnection,
+  parseAllFromConnectionString,
+} from '~/server/db/connection-utils';
 import { encryptSensitiveData } from '~/server/db/encryption';
 import {
   getTables,
@@ -61,6 +64,11 @@ export const connectionRouter = createTRPCRouter({
             : null;
         }
 
+        const connectionParams =
+          input.connectionType === 'connection_string'
+            ? parseAllFromConnectionString(input.connectionString)
+            : null;
+
         const result = await ctx.db
           .insert(databaseConnections)
           .values({
@@ -68,11 +76,23 @@ export const connectionRouter = createTRPCRouter({
             name: input.name,
             connectionType: input.connectionType,
             connectionString: encryptedConnectionString,
-            host: input.connectionType === 'manual' ? input.host : null,
-            port: input.connectionType === 'manual' ? input.port : null,
-            username: input.connectionType === 'manual' ? input.username : null,
+            host:
+              input.connectionType === 'manual'
+                ? input.host
+                : connectionParams?.host,
+            port:
+              input.connectionType === 'manual'
+                ? input.port
+                : connectionParams?.port,
+            username:
+              input.connectionType === 'manual'
+                ? input.username
+                : connectionParams?.username,
             password: encryptedPassword,
-            database: input.connectionType === 'manual' ? input.database : null,
+            database:
+              input.connectionType === 'manual'
+                ? input.database
+                : connectionParams?.database,
             ssl: input.connectionType === 'manual' ? input.ssl : false,
             sslMode:
               input.connectionType === 'manual' ? input.sslMode : 'disable',
@@ -284,6 +304,20 @@ export const connectionRouter = createTRPCRouter({
         updateData.connectionString = encryptSensitiveData(
           input.connectionString
         );
+
+        const connectionParams = parseAllFromConnectionString(
+          input.connectionString
+        );
+
+        // Update all extractable fields from the connection string
+        if (updateData.host === undefined)
+          updateData.host = connectionParams.host;
+        if (updateData.port === undefined)
+          updateData.port = connectionParams.port;
+        if (updateData.username === undefined)
+          updateData.username = connectionParams.username;
+        if (updateData.database === undefined)
+          updateData.database = connectionParams.database;
       }
 
       const updated = await ctx.db

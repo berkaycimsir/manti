@@ -8,16 +8,26 @@ import {
   Trash2,
   Unplug,
 } from 'lucide-react';
-import { Card } from '~/components/ui/card';
+import { ConnectionCardSkeleton } from '~/components/ui/content-skeletons';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-import { formatRelativeTime } from '~/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/ui/tooltip';
+import { TruncatedText } from '~/components/ui/truncated-text';
+import {
+  cn,
+  formatRelativeTime,
+  isLocalConnection,
+  isProduction,
+} from '~/lib/utils';
 import { api } from '~/trpc/react';
-import { ConnectionCardSkeleton } from '~/components/ui/content-skeletons';
 
 export interface Connection {
   id: number;
@@ -72,10 +82,24 @@ export function ConnectionCard({
     return <ConnectionCardSkeleton />;
   }
 
-  return (
-    <Card
-      className="group flex h-full cursor-pointer flex-col p-5 transition-shadow hover:shadow-md"
-      onClick={() => onSelect(connection.id)}
+  const isRestricted = isProduction() && isLocalConnection(connection.host);
+
+  const cardContent = (
+    <div
+      className={cn(
+        'group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card p-5 transition-all',
+        isRestricted
+          ? 'cursor-not-allowed opacity-60 grayscale-[0.3]'
+          : 'cursor-pointer hover:border-primary/50 hover:shadow-md'
+      )}
+      onClick={() => !isRestricted && onSelect(connection.id)}
+      role="button"
+      tabIndex={isRestricted ? -1 : 0}
+      onKeyDown={(e) => {
+        if (!isRestricted && (e.key === 'Enter' || e.key === ' ')) {
+          onSelect(connection.id);
+        }
+      }}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
@@ -86,13 +110,16 @@ export function ConnectionCard({
             <h3 className="truncate font-semibold text-foreground text-md leading-tight">
               {connection.name}
             </h3>
-            <p className="truncate text-muted-foreground text-xs">
-              {connection.database}
+            <p className="truncate font-mono text-muted-foreground text-xs">
+              {connection.database || 'N/A'}
             </p>
           </div>
         </div>
         <div
-          className="opacity-0 transition-opacity group-hover:opacity-100"
+          className={cn(
+            'transition-opacity group-hover:opacity-100',
+            isRestricted ? 'opacity-100' : 'opacity-0'
+          )}
           onClick={(e) => e.stopPropagation()}
         >
           <DropdownMenu>
@@ -100,12 +127,16 @@ export function ConnectionCard({
               <button
                 type="button"
                 className="rounded p-1 hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Actions"
               >
                 <MoreVertical className="h-4 w-4 text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onSelect(connection.id)}>
+              <DropdownMenuItem
+                disabled={isRestricted}
+                onClick={() => onSelect(connection.id)}
+              >
                 <Database className="mr-2 h-4 w-4" />
                 Open Database
               </DropdownMenuItem>
@@ -126,14 +157,23 @@ export function ConnectionCard({
       </div>
 
       <div className="flex-1">
-        <div className="mb-2 space-y-1.5 text-sm">
-          <div className="flex justify-between">
+        <div className="mt-4 mb-2 space-y-1.5 text-sm">
+          <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Type:</span>
-            <span className="font-mono text-foreground">
+            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground uppercase tracking-wider">
               {connection.connectionType === 'connection_string'
-                ? 'Connection String'
+                ? 'String'
                 : 'Manual'}
             </span>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-muted-foreground">Host:</span>
+            <TruncatedText
+              text={connection.host || 'localhost'}
+              maxLength={20}
+              popoverTitle="Full Hostname"
+              className="text-foreground"
+            />
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Created:</span>
@@ -161,18 +201,26 @@ export function ConnectionCard({
             <span className="text-muted-foreground">Status:</span>
             <div className="flex items-center gap-2">
               <div
-                className={`h-1.5 w-1.5 rounded-full ${
-                  connection.isActive ? 'bg-green-500' : 'bg-red-500'
-                }`}
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full',
+                  connection.isActive && !isRestricted
+                    ? 'bg-green-500'
+                    : 'bg-red-500'
+                )}
               />
               <span
-                className={`rounded-full px-1.5 py-0 font-mono font-semibold text-[10px] uppercase ${
-                  connection.isActive
+                className={cn(
+                  'rounded-full px-1.5 py-0 font-mono font-semibold text-[10px] uppercase',
+                  connection.isActive && !isRestricted
                     ? 'bg-green-500/10 text-green-500'
                     : 'bg-red-500/10 text-red-500'
-                }`}
+                )}
               >
-                {connection.isActive ? 'Active' : 'Inactive'}
+                {isRestricted
+                  ? 'Local Restricted'
+                  : connection.isActive
+                  ? 'Active'
+                  : 'Inactive'}
               </span>
             </div>
           </div>
@@ -188,14 +236,15 @@ export function ConnectionCard({
                 e.stopPropagation();
                 onReconnect();
               }}
-              disabled={isReconnecting}
+              disabled={isReconnecting || isRestricted}
               className="rounded p-1 transition-colors hover:bg-blue-500/10 disabled:opacity-50"
               title="Reconnect"
             >
               <RefreshCw
-                className={`h-3.5 w-3.5 text-blue-500 ${
-                  isReconnecting || isLoadingDatabases ? 'animate-spin' : ''
-                }`}
+                className={cn(
+                  'h-3.5 w-3.5 text-blue-500',
+                  (isReconnecting || isLoadingDatabases) && 'animate-spin'
+                )}
               />
             </button>
           )}
@@ -206,7 +255,7 @@ export function ConnectionCard({
                 e.stopPropagation();
                 onClose();
               }}
-              disabled={isClosing}
+              disabled={isClosing || isRestricted}
               className="rounded p-1 transition-colors hover:bg-orange-500/10 disabled:opacity-50"
               title="Close"
             >
@@ -238,6 +287,22 @@ export function ConnectionCard({
           </button>
         </div>
       </div>
-    </Card>
+    </div>
   );
+
+  if (isRestricted) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[250px] text-center">
+          <p>
+            Local database connections are not accessible from the web version.
+            Please install the app locally to connect to local databases.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return cardContent;
 }

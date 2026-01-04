@@ -13,10 +13,21 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-import { cn, formatRelativeTime } from '~/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/ui/tooltip';
+import { TruncatedText } from '~/components/ui/truncated-text';
+import {
+  cn,
+  formatRelativeTime,
+  isLocalConnection,
+  isProduction,
+} from '~/lib/utils';
 import { api } from '~/trpc/react';
 import type { Connection } from './connection-card';
 
@@ -53,17 +64,21 @@ export function ConnectionRow({
     ? formatRelativeTime(connection.lastUsedAt)
     : null;
 
-  return (
+  const isRestricted = isProduction() && isLocalConnection(connection.host);
+
+  const rowContent = (
     <div
       role="button"
-      tabIndex={0}
+      tabIndex={isRestricted ? -1 : 0}
       className={cn(
-        'flex cursor-pointer items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors',
-        'hover:border-primary hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary'
+        'flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors',
+        isRestricted
+          ? 'cursor-not-allowed opacity-60 grayscale-[0.3]'
+          : 'cursor-pointer hover:border-primary hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary'
       )}
-      onClick={() => onSelect(connection.id)}
+      onClick={() => !isRestricted && onSelect(connection.id)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (!isRestricted && (e.key === 'Enter' || e.key === ' ')) {
           e.preventDefault();
           onSelect(connection.id);
         }
@@ -73,7 +88,9 @@ export function ConnectionRow({
       <Database
         className={cn(
           'h-5 w-5 shrink-0',
-          connection.isActive ? 'text-primary' : 'text-muted-foreground'
+          connection.isActive && !isRestricted
+            ? 'text-primary'
+            : 'text-muted-foreground'
         )}
       />
 
@@ -83,13 +100,18 @@ export function ConnectionRow({
           <h3 className="truncate font-semibold text-foreground">
             {connection.name}
           </h3>
-          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
             {connection.database || 'No DB'}
           </span>
         </div>
 
         <div className="col-span-3 text-muted-foreground text-sm">
-          {connection.host || 'local'}
+          <TruncatedText
+            text={connection.host || 'localhost'}
+            maxLength={20}
+            popoverTitle="Full Hostname"
+            className="text-muted-foreground"
+          />
         </div>
 
         <div className="col-span-2 text-muted-foreground text-sm">
@@ -97,15 +119,23 @@ export function ConnectionRow({
             <div
               className={cn(
                 'h-1.5 w-1.5 rounded-full',
-                connection.isActive ? 'bg-green-500' : 'bg-red-500'
+                connection.isActive && !isRestricted
+                  ? 'bg-green-500'
+                  : 'bg-red-500'
               )}
             />
-            <span>{connection.isActive ? 'Active' : 'Inactive'}</span>
+            <span className="text-xs">
+              {isRestricted
+                ? 'Local Restricted'
+                : connection.isActive
+                ? 'Active'
+                : 'Inactive'}
+            </span>
           </div>
         </div>
 
-        <div className="relative col-span-3 pr-4 text-right text-muted-foreground text-sm">
-          {connection.isActive && stats ? (
+        <div className="relative col-span-3 pr-4 text-right font-mono text-muted-foreground text-xs">
+          {connection.isActive && stats && !isRestricted ? (
             <span>{stats.tableCount} tables</span>
           ) : (
             <span>{lastUsed ? `Used ${lastUsed}` : 'Never used'}</span>
@@ -122,21 +152,25 @@ export function ConnectionRow({
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
               <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onSelect(connection.id)}>
+            <DropdownMenuItem
+              disabled={isRestricted}
+              onClick={() => onSelect(connection.id)}
+            >
               <Database className="mr-2 h-4 w-4" />
               Open Database
             </DropdownMenuItem>
 
             {!connection.isActive && (
               <DropdownMenuItem
+                disabled={isReconnecting || isRestricted}
                 onClick={(e) => {
                   e.preventDefault();
                   onReconnect();
                 }}
-                disabled={isReconnecting}
               >
                 <RefreshCw
                   className={cn(
@@ -150,11 +184,11 @@ export function ConnectionRow({
 
             {connection.isActive && (
               <DropdownMenuItem
+                disabled={isClosing || isRestricted}
                 onClick={(e) => {
                   e.preventDefault();
                   onClose();
                 }}
-                disabled={isClosing}
               >
                 <Unplug className="mr-2 h-4 w-4 text-orange-500" />
                 Close Connection
@@ -186,4 +220,20 @@ export function ConnectionRow({
       </div>
     </div>
   );
+
+  if (isRestricted) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{rowContent}</TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[250px] text-center">
+          <p>
+            Local database connections are not accessible from the web version.
+            Please install the app locally to connect to local databases.
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return rowContent;
 }
