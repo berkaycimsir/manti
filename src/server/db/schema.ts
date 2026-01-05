@@ -50,6 +50,16 @@ export const databaseConnections = createTable(
 		isActive: boolean("is_active").default(false),
 		// Track when the connection was last used (for idle timeout)
 		lastUsedAt: timestamp("last_used_at", { mode: "date" }),
+		// Connection settings
+		color: text("color").default("blue"),
+		defaultSchema: text("default_schema"),
+		queryTimeoutSeconds: integer("query_timeout_seconds").default(60),
+		rowLimit: integer("row_limit").default(500),
+		isReadOnly: boolean("is_read_only").default(false),
+		confirmDestructive: boolean("confirm_destructive").default(true),
+		keepAliveSeconds: integer("keep_alive_seconds").default(0),
+		autoReconnect: boolean("auto_reconnect").default(true),
+		// Timestamps
 		createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 		updatedAt: timestamp("updated_at", { mode: "date" })
 			.defaultNow()

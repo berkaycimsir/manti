@@ -67,27 +67,58 @@ export async function getTableColumns(
 /**
  * Execute a custom SQL query
  */
+// Regular expressions to detect destructive queries
+const DESTRUCTIVE_REGEX =
+	/^\s*(INSERT|UPDATE|DELETE|DROP|TRUNCATE|ALTER|GRANT|REVOKE|CREATE)\b/i;
+const SELECT_REGEX = /^\s*(WITH\s+.+\s+)?SELECT\b/i;
+
+export interface QueryOptions {
+	isReadOnly?: boolean;
+	queryTimeoutSeconds?: number;
+	rowLimit?: number;
+}
+
+/**
+ * Execute a custom SQL query
+ */
 export async function executeQuery(
 	db: Kysely<any>,
-	query: string
+	query: string,
+	options: QueryOptions = {}
 ): Promise<QueryResult> {
-	try {
-		const result = await sql.raw(query).execute(db);
+	// 1. Enforce read-only mode client-side
+	if (options.isReadOnly && DESTRUCTIVE_REGEX.test(query)) {
+		throw new Error(
+			"Connection is in read-only mode. Destructive queries are not allowed."
+		);
+	}
 
-		if (Array.isArray(result.rows)) {
-			return {
-				rows: result.rows as Array<Record<string, unknown>>,
-				rowCount: result.rows.length,
-				command: "SELECT",
-			};
+	try {
+		// 2. Prepare final query
+		let finalQuery = query;
+
+		// 3. Enforce row limit for SELECT queries
+		if (options.rowLimit && options.rowLimit > 0 && SELECT_REGEX.test(query)) {
+			// Basic heuristic: wrap in a subquery to enforce limit
+			// This is safer than appending LIMIT because the original query might already have one or use UNIONs
+			// Remove trailing semicolon if present
+			const cleanQuery = query.trim().replace(/;$/, "");
+			finalQuery = `SELECT * FROM (${cleanQuery}) AS wrapped_query_limit LIMIT ${options.rowLimit}`;
 		}
 
-		// For non-SELECT queries (INSERT, UPDATE, DELETE, etc.)
-		return {
-			rows: [],
-			rowCount: result?.numAffectedRows ? Number(result.numAffectedRows) : 0,
-			command: query.trim().split(/\s+/)[0]?.toUpperCase() ?? "UNKNOWN",
-		};
+		// 4. Enforce query timeout using a transaction-scoped SET LOCAL statement
+		if (options.queryTimeoutSeconds && options.queryTimeoutSeconds > 0) {
+			return await db.transaction().execute(async trx => {
+				await sql
+					.raw(
+						`SET LOCAL statement_timeout = '${options.queryTimeoutSeconds}s'`
+					)
+					.execute(trx);
+				return executeRaw(trx, finalQuery);
+			});
+		}
+
+		return await executeRaw(db, finalQuery);
 	} catch (error) {
 		throw new Error(
 			`Query execution failed: ${
@@ -95,6 +126,28 @@ export async function executeQuery(
 			}`
 		);
 	}
+}
+
+async function executeRaw(
+	db: Kysely<any>,
+	query: string
+): Promise<QueryResult> {
+	const result = await sql.raw(query).execute(db);
+
+	if (Array.isArray(result.rows)) {
+		return {
+			rows: result.rows as Array<Record<string, unknown>>,
+			rowCount: result.rows.length,
+			command: "SELECT",
+		};
+	}
+
+	// For non-SELECT queries (INSERT, UPDATE, DELETE, etc.)
+	return {
+		rows: [],
+		rowCount: result?.numAffectedRows ? Number(result.numAffectedRows) : 0,
+		command: query.trim().split(/\s+/)[0]?.toUpperCase() ?? "UNKNOWN",
+	};
 }
 
 /**
@@ -164,7 +217,8 @@ export async function getTableData(
 	tableName: string,
 	schemaName = "public",
 	limit = 100,
-	offset = 0
+	offset = 0,
+	options: { queryTimeoutSeconds?: number } = {}
 ): Promise<{ rows: Array<Record<string, unknown>>; totalCount: number }> {
 	// Get total count first using builder
 	const countResult = await db
@@ -179,13 +233,31 @@ export async function getTableData(
 			: Number(countResult?.count ?? 0);
 
 	// Get paginated rows using builder
-	const rows = await db
-		.withSchema(schemaName)
-		.selectFrom(tableName)
-		.selectAll()
-		.limit(limit)
-		.offset(offset)
-		.execute();
+	let rows: Array<Record<string, unknown>>;
+
+	if (options.queryTimeoutSeconds && options.queryTimeoutSeconds > 0) {
+		rows = await db.transaction().execute(async trx => {
+			await sql
+				.raw(`SET LOCAL statement_timeout = '${options.queryTimeoutSeconds}s'`)
+				.execute(trx);
+
+			return await trx
+				.withSchema(schemaName)
+				.selectFrom(tableName)
+				.selectAll()
+				.limit(limit)
+				.offset(offset)
+				.execute();
+		});
+	} else {
+		rows = await db
+			.withSchema(schemaName)
+			.selectFrom(tableName)
+			.selectAll()
+			.limit(limit)
+			.offset(offset)
+			.execute();
+	}
 
 	return {
 		rows: rows as Array<Record<string, unknown>>,

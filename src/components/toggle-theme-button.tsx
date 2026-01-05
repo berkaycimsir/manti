@@ -10,12 +10,19 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "~/components/ui/tooltip";
+import { THEME_COLORS } from "~/config/theme-config";
 import { cn } from "~/lib/utils";
-import { type ThemeColor, useThemeStore } from "~/stores/theme-store";
+import { useThemeStore } from "~/stores/theme-store";
 
 function ToggleThemeButton() {
 	const { theme, setTheme } = useTheme();
-	const { color, setColor } = useThemeStore();
+	const { color, setColor, overrideColor } = useThemeStore();
 
 	// Ensure component is mounted to avoid hydration mismatch on icon rendering
 	const [_mounted, setMounted] = React.useState(false);
@@ -23,15 +30,7 @@ function ToggleThemeButton() {
 		setMounted(true);
 	}, []);
 
-	const colors: { name: ThemeColor; class: string }[] = [
-		{ name: "zinc", class: "bg-zinc-950 dark:bg-zinc-100" },
-		{ name: "red", class: "bg-red-500" },
-		{ name: "blue", class: "bg-blue-500" },
-		{ name: "green", class: "bg-green-500" },
-		{ name: "orange", class: "bg-orange-500" },
-		{ name: "violet", class: "bg-violet-500" },
-		{ name: "yellow", class: "bg-yellow-500" },
-	];
+	const colors = THEME_COLORS;
 
 	return (
 		<DropdownMenu>
@@ -39,7 +38,10 @@ function ToggleThemeButton() {
 				<Button
 					variant="outline"
 					size="icon"
-					className="relative ring-1 ring-primary"
+					className={cn(
+						"relative ring-1 ring-primary",
+						overrideColor && "ring-offset-2 ring-offset-background"
+					)}
 				>
 					<Sun className="dark:-rotate-90 h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:scale-0" />
 					<Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -94,24 +96,42 @@ function ToggleThemeButton() {
 				<DropdownMenuSeparator />
 
 				<div className="p-2">
-					<DropdownMenuLabel className="px-0.5 font-semibold text-muted-foreground text-xs uppercase">
-						Color
-					</DropdownMenuLabel>
+					<div className="flex items-center justify-between">
+						<DropdownMenuLabel className="px-0.5 font-semibold text-muted-foreground text-xs uppercase">
+							Color
+						</DropdownMenuLabel>
+						{overrideColor && (
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<span className="text-muted-foreground text-xs">
+											Managed by connection
+										</span>
+									</TooltipTrigger>
+									<TooltipContent>
+										App uses connection color when active.
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
+						)}
+					</div>
 					<div className="grid grid-cols-3 gap-2">
 						{colors.map(t => (
 							<Button
-								key={t.name}
+								key={t.value}
 								variant="outline"
+								disabled={!!overrideColor}
 								className={cn(
 									"h-8 w-full justify-start gap-2 px-2",
-									color === t.name && "border-transparent ring-1 ring-primary"
+									(overrideColor ? overrideColor : color) === t.value &&
+										"border-transparent ring-1 ring-primary"
 								)}
-								onClick={() => setColor(t.name)}
+								onClick={() => setColor(t.value)}
 							>
 								<span
 									className={cn("h-4 w-4 shrink-0 rounded-full", t.class)}
 								/>
-								<span className="text-xs capitalize">{t.name}</span>
+								<span className="text-xs capitalize">{t.label}</span>
 							</Button>
 						))}
 					</div>

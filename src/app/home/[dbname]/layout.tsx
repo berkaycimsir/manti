@@ -1,9 +1,11 @@
 "use client";
-
-import { Code, Eye, Table } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useMemo } from "react";
-import { type TabConfig, useHeader } from "~/hooks/use-header";
+import { useEffect } from "react";
+import type { ThemeColor } from "~/config/theme-config";
+import { useDashboardTabs } from "~/hooks/use-dashboard-tabs";
+import { useHeader } from "~/hooks/use-header";
+import { useGlobalSettingsStore } from "~/stores/global-settings-store";
+import { useThemeStore } from "~/stores/theme-store";
 import { api } from "~/trpc/react";
 
 export default function DatabaseLayout({
@@ -29,25 +31,48 @@ export default function DatabaseLayout({
 		router.push("/home");
 	};
 
+	const useConnectionThemeColor = useGlobalSettingsStore(
+		state => state.useConnectionThemeColor
+	);
+	const setOverrideColor = useThemeStore(state => state.setOverrideColor);
+
+	useEffect(() => {
+		if (useConnectionThemeColor && currentConnection?.color) {
+			setOverrideColor(currentConnection.color as ThemeColor);
+		} else {
+			setOverrideColor(null);
+		}
+		return () => setOverrideColor(null);
+	}, [useConnectionThemeColor, currentConnection?.color, setOverrideColor]);
+
+	// Listen for "/" key to focus database selector
+	useEffect(() => {
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (
+				event.key === "/" &&
+				document.activeElement?.tagName !== "INPUT" &&
+				document.activeElement?.tagName !== "TEXTAREA"
+			) {
+				event.preventDefault();
+				// TODO: Implement focus on database selector
+				console.log("Focus database selector");
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, []);
+
 	// Determine active tab from pathname
 	const getActiveTab = () => {
 		if (pathname.includes("/query")) return "query";
 		if (pathname.includes("/info")) return "info";
+		if (pathname.includes("/settings")) return "settings";
 		if (pathname.includes("/tables")) return "tables";
 		return "tables";
 	};
 
 	const activeTab = getActiveTab();
-
-	const handleTabChange = (tab: string) => {
-		if (tab === "tables") {
-			router.push(`/home/${dbname}/tables`);
-		} else if (tab === "query") {
-			router.push(`/home/${dbname}/query`);
-		} else if (tab === "info") {
-			router.push(`/home/${dbname}/info`);
-		}
-	};
 
 	// Check if we're on a detail page (table detail, query editor, query show)
 	// These pages define their own headers
@@ -55,19 +80,13 @@ export default function DatabaseLayout({
 		(pathname.match(/\/home\/[^/]+\/[^/]+$/) &&
 			!pathname.includes("/tables") &&
 			!pathname.includes("/query") &&
-			!pathname.includes("/info")) ||
+			!pathname.includes("/info") &&
+			!pathname.includes("/settings")) ||
 		pathname.includes("/query/new") ||
 		pathname.includes("/query/show");
 
 	// Tab configuration for dashboard pages
-	const tabs: TabConfig[] = useMemo(
-		() => [
-			{ key: "tables", label: "Tables", icon: <Table className="h-4 w-4" /> },
-			{ key: "query", label: "Query", icon: <Code className="h-4 w-4" /> },
-			{ key: "info", label: "Info", icon: <Eye className="h-4 w-4" /> },
-		],
-		[]
-	);
+	const { tabs, handleTabChange } = useDashboardTabs(dbname);
 
 	// Register header for dashboard pages (not detail pages)
 	useHeader(

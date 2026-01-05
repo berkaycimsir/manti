@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Code, Info, Plus, Table } from "lucide-react";
+import { ChevronRight, Code, Info, Plus, Settings, Table } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
@@ -23,6 +23,7 @@ const links = [
 	{ href: "query", label: "Saved Queries", icon: Code, hasMenu: true },
 	{ href: "query/new", label: "New Query", icon: Plus, hasMenu: false },
 	{ href: "info", label: "Database Info", icon: Info, hasMenu: false },
+	{ href: "settings", label: "Settings", icon: Settings, hasMenu: false },
 ];
 
 export function QuickLinks({ dbname }: QuickLinksProps) {

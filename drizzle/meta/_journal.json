@@ -36,6 +36,13 @@
 			"when": 1767615979166,
 			"tag": "0004_workable_monster_badoon",
 			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1767646025302,
+			"tag": "0005_absent_secret_warriors",
+			"breakpoints": true
 		}
 	]
 }

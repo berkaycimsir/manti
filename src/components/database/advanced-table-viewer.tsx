@@ -21,6 +21,7 @@ import {
 	type TransformationConfig,
 	applyTransformation,
 } from "~/lib/transformations";
+import { useGlobalSettingsStore } from "~/stores/global-settings-store";
 import { useTableStore } from "~/stores/table-store";
 import {
 	type DensityMode,
@@ -64,17 +65,6 @@ interface AdvancedTableViewerProps {
 }
 
 const EMPTY_ARRAY: string[] = [];
-const DEFAULT_TABLE_OPTIONS = {
-	showRowNumbers: true,
-	zebraStriping: true,
-	wordWrap: false,
-	showNullDistinct: true,
-	fullWidth: false,
-};
-const DEFAULT_TEXT_VIEW_OPTIONS = {
-	maxCharacters: 100,
-	alignmentMode: "freeText" as const,
-};
 
 export interface AdvancedTableViewerRef {
 	exportCSV: () => void;
@@ -112,10 +102,16 @@ export const AdvancedTableViewer = forwardRef<
 			setRowHeight
 		);
 
+		// Global Defaults (Reactive)
+		const { defaultDensity, defaultTableOptions, defaultTextViewOptions } =
+			useGlobalSettingsStore();
+
 		// View state (Persisted)
-		const densityMode = useTableDensityStore(
-			state => state.densityModes[`${dbName}-${tableName}`] ?? "default"
+		const densityModeRaw = useTableDensityStore(
+			state => state.densityModes[`${dbName}-${tableName}`]
 		);
+		const densityMode = densityModeRaw ?? defaultDensity;
+
 		const setDensityModeStore = useTableDensityStore(
 			state => state.setDensityMode
 		);
@@ -141,16 +137,17 @@ export const AdvancedTableViewer = forwardRef<
 			state => state.toggleColumnPin
 		);
 
-		const tableOptions = useTableOptionsStore(
-			state => state.options[`${dbName}-${tableName}`] ?? DEFAULT_TABLE_OPTIONS
+		const tableOptionsRaw = useTableOptionsStore(
+			state => state.options[`${dbName}-${tableName}`]
 		);
+		const tableOptions = tableOptionsRaw ?? defaultTableOptions;
 		const setOption = useTableOptionsStore(state => state.setOption);
 
 		// Text View options (Persisted)
-		const textViewOptions = useTextViewOptionsStore(
-			state =>
-				state.options[`${dbName}-${tableName}`] ?? DEFAULT_TEXT_VIEW_OPTIONS
+		const textViewOptionsRaw = useTextViewOptionsStore(
+			state => state.options[`${dbName}-${tableName}`]
 		);
+		const textViewOptions = textViewOptionsRaw ?? defaultTextViewOptions;
 		const setMaxCharactersStore = useTextViewOptionsStore(
 			state => state.setMaxCharacters
 		);

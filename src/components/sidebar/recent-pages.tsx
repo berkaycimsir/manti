@@ -1,6 +1,6 @@
 "use client";
 
-import { Code, FileText, Info, Star, Table } from "lucide-react";
+import { Code, FileText, Info, Settings, Star, Table } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,6 +13,7 @@ const iconMap: Record<string, React.ElementType> = {
 	Table,
 	Code,
 	Info,
+	Settings,
 	FileText,
 };
 

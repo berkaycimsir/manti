@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { useGlobalSettingsStore } from "./global-settings-store";
+
 export type DensityMode = "compact" | "default" | "comfortable";
 export type ViewMode = "grid" | "transpose" | "text";
 
@@ -58,7 +60,8 @@ export const useTextViewOptionsStore = create<TextViewOptionsState>()(
 					};
 				}),
 			getOptions: (dbName, tableName) =>
-				get().options[`${dbName}-${tableName}`] ?? defaultTextViewOptions,
+				get().options[`${dbName}-${tableName}`] ??
+				useGlobalSettingsStore.getState().defaultTextViewOptions,
 		}),
 		{ name: "text-view-options-storage" }
 	)
@@ -87,7 +90,8 @@ export const useTableDensityStore = create<DensityState>()(
 					},
 				})),
 			getDensityMode: (dbName, tableName) =>
-				get().densityModes[`${dbName}-${tableName}`] ?? "default",
+				get().densityModes[`${dbName}-${tableName}`] ??
+				useGlobalSettingsStore.getState().defaultDensity,
 		}),
 		{ name: "table-density-storage" }
 	)
@@ -240,7 +244,8 @@ export const useTableOptionsStore = create<OptionsState>()(
 					};
 				}),
 			getOptions: (dbName, tableName) =>
-				get().options[`${dbName}-${tableName}`] ?? defaultOptions,
+				get().options[`${dbName}-${tableName}`] ??
+				useGlobalSettingsStore.getState().defaultTableOptions,
 		}),
 		{ name: "table-options-storage" }
 	)

@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
@@ -9,6 +10,7 @@ import {
 	getTableData,
 	getTables,
 } from "~/server/db/query-utils";
+import { databaseConnections } from "~/server/db/schema";
 
 export const tableRouter = createTRPCRouter({
 	/**
@@ -96,13 +98,29 @@ export const tableRouter = createTRPCRouter({
 		)
 		.query(async ({ ctx, input }) => {
 			try {
+				const connection = await ctx.db.query.databaseConnections.findFirst({
+					where: and(
+						eq(databaseConnections.id, input.connectionId),
+						eq(databaseConnections.userId, ctx.userId)
+					),
+					columns: {
+						queryTimeoutSeconds: true,
+						rowLimit: true,
+					},
+				});
+
 				const db = await getValidatedConnection(ctx, input.connectionId);
+				const effectiveLimit = connection?.rowLimit
+					? Math.min(input.limit, connection.rowLimit)
+					: input.limit;
+
 				const data = await getTableData(
 					db,
 					input.tableName,
 					input.schemaName,
-					input.limit,
-					input.offset
+					effectiveLimit,
+					input.offset,
+					{ queryTimeoutSeconds: connection?.queryTimeoutSeconds ?? 60 }
 				);
 				return data;
 			} catch (error) {

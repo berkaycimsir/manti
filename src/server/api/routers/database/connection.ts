@@ -174,6 +174,15 @@ export const connectionRouter = createTRPCRouter({
 			isActive: conn.isActive,
 			createdAt: conn.createdAt,
 			lastUsedAt: conn.lastUsedAt,
+			// Settings
+			color: conn.color,
+			defaultSchema: conn.defaultSchema,
+			queryTimeoutSeconds: conn.queryTimeoutSeconds,
+			rowLimit: conn.rowLimit,
+			isReadOnly: conn.isReadOnly,
+			confirmDestructive: conn.confirmDestructive,
+			keepAliveSeconds: conn.keepAliveSeconds,
+			autoReconnect: conn.autoReconnect,
 		}));
 	}),
 
@@ -260,6 +269,15 @@ export const connectionRouter = createTRPCRouter({
 					.enum(["disable", "prefer", "require", "verify-full"])
 					.optional(),
 				connectionString: z.string().optional(),
+				// Settings
+				color: z.string().optional(),
+				defaultSchema: z.string().nullable().optional(),
+				queryTimeoutSeconds: z.number().min(1).max(3600).optional(),
+				rowLimit: z.number().min(1).max(10000).optional(),
+				isReadOnly: z.boolean().optional(),
+				confirmDestructive: z.boolean().optional(),
+				keepAliveSeconds: z.number().min(0).max(3600).optional(),
+				autoReconnect: z.boolean().optional(),
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -319,6 +337,22 @@ export const connectionRouter = createTRPCRouter({
 				if (updateData.database === undefined)
 					updateData.database = connectionParams.database;
 			}
+
+			// Update settings fields
+			if (input.color !== undefined) updateData.color = input.color;
+			if (input.defaultSchema !== undefined)
+				updateData.defaultSchema = input.defaultSchema;
+			if (input.queryTimeoutSeconds !== undefined)
+				updateData.queryTimeoutSeconds = input.queryTimeoutSeconds;
+			if (input.rowLimit !== undefined) updateData.rowLimit = input.rowLimit;
+			if (input.isReadOnly !== undefined)
+				updateData.isReadOnly = input.isReadOnly;
+			if (input.confirmDestructive !== undefined)
+				updateData.confirmDestructive = input.confirmDestructive;
+			if (input.keepAliveSeconds !== undefined)
+				updateData.keepAliveSeconds = input.keepAliveSeconds;
+			if (input.autoReconnect !== undefined)
+				updateData.autoReconnect = input.autoReconnect;
 
 			const updated = await ctx.db
 				.update(databaseConnections)

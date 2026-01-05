@@ -181,11 +181,14 @@ export default function HomeLayout({
 			if (pathname.includes("/info")) {
 				return { title: "Database Info", icon: "Info" };
 			}
+			if (pathname.includes("/settings")) {
+				return { title: "Settings", icon: "Settings" };
+			}
 			// Table view - extract table name
 			const tableMatch = pathname.match(/\/home\/[^/]+\/([^/]+)$/);
 			if (
 				tableMatch?.[1] &&
-				!["tables", "query", "info"].includes(tableMatch[1])
+				!["tables", "query", "info", "settings"].includes(tableMatch[1])
 			) {
 				return { title: tableMatch[1], subtitle: "Table", icon: "Table" };
 			}

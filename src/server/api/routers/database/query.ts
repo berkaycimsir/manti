@@ -181,9 +181,25 @@ export const queryRouter = createTRPCRouter({
 
 			try {
 				const startTime = Date.now();
+				const connection = await ctx.db.query.databaseConnections.findFirst({
+					where: and(
+						eq(databaseConnections.id, savedQuery.connectionId),
+						eq(databaseConnections.userId, ctx.userId)
+					),
+					columns: {
+						isReadOnly: true,
+						queryTimeoutSeconds: true,
+						rowLimit: true,
+					},
+				});
+
 				const db = await getValidatedConnection(ctx, savedQuery.connectionId);
 
-				const result = await executeQuery(db, savedQuery.query);
+				const result = await executeQuery(db, savedQuery.query, {
+					isReadOnly: connection?.isReadOnly ?? false,
+					queryTimeoutSeconds: connection?.queryTimeoutSeconds ?? 60,
+					rowLimit: connection?.rowLimit ?? 500,
+				});
 				const executionTime = Date.now() - startTime;
 
 				const updated = await ctx.db
@@ -226,9 +242,25 @@ export const queryRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			try {
 				const startTime = Date.now();
+				const connection = await ctx.db.query.databaseConnections.findFirst({
+					where: and(
+						eq(databaseConnections.id, input.connectionId),
+						eq(databaseConnections.userId, ctx.userId)
+					),
+					columns: {
+						isReadOnly: true,
+						queryTimeoutSeconds: true,
+						rowLimit: true,
+					},
+				});
+
 				const db = await getValidatedConnection(ctx, input.connectionId);
 
-				const result = await executeQuery(db, input.query);
+				const result = await executeQuery(db, input.query, {
+					isReadOnly: connection?.isReadOnly ?? false,
+					queryTimeoutSeconds: connection?.queryTimeoutSeconds ?? 60,
+					rowLimit: connection?.rowLimit ?? 500,
+				});
 				const executionTime = Date.now() - startTime;
 
 				const saved = await ctx.db
@@ -272,8 +304,24 @@ export const queryRouter = createTRPCRouter({
 		)
 		.mutation(async ({ ctx, input }) => {
 			try {
+				const connection = await ctx.db.query.databaseConnections.findFirst({
+					where: and(
+						eq(databaseConnections.id, input.connectionId),
+						eq(databaseConnections.userId, ctx.userId)
+					),
+					columns: {
+						isReadOnly: true,
+						queryTimeoutSeconds: true,
+						rowLimit: true,
+					},
+				});
+
 				const db = await getValidatedConnection(ctx, input.connectionId);
-				return await executeQuery(db, input.query);
+				return await executeQuery(db, input.query, {
+					isReadOnly: connection?.isReadOnly ?? false,
+					queryTimeoutSeconds: connection?.queryTimeoutSeconds ?? 60,
+					rowLimit: connection?.rowLimit ?? 500,
+				});
 			} catch (error) {
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
