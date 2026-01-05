@@ -46,7 +46,7 @@ export function TextView({
 
 	// Calculate max column name length for aligned mode
 	const maxColumnNameLength = useMemo(() => {
-		return Math.max(...visibleColumnsArray.map((col) => col.name.length));
+		return Math.max(...visibleColumnsArray.map(col => col.name.length));
 	}, [visibleColumnsArray]);
 
 	// Calculate content-based column widths for horizontal alignment
@@ -98,7 +98,7 @@ export function TextView({
 			<div
 				className={cn(
 					"overflow-hidden rounded-lg border border-border",
-					fullWidth && "w-full",
+					fullWidth && "w-full"
 				)}
 			>
 				<div className="max-h-[70vh] overflow-auto">
@@ -113,11 +113,11 @@ export function TextView({
 											"group transition-colors hover:bg-muted/30",
 											zebraStriping && rowIndex % 2 === 1 && "bg-muted/20",
 											densityStyles[densityMode].py,
-											"px-2",
+											"px-2"
 										)}
 									>
 										<div className="flex gap-3 text-sm">
-											{visibleColumnsArray.map((col) => {
+											{visibleColumnsArray.map(col => {
 												const value = row[col.name];
 												const formattedValue = formatValue(value, col.name);
 												const isNull = isNullValue(value);
@@ -162,7 +162,7 @@ export function TextView({
 		<div
 			className={cn(
 				"overflow-hidden rounded-lg border border-border",
-				fullWidth && "w-full",
+				fullWidth && "w-full"
 			)}
 		>
 			<div className="max-h-[70vh] overflow-auto">
@@ -179,11 +179,11 @@ export function TextView({
 										"group transition-colors hover:bg-muted/30",
 										zebraStriping && rowIndex % 2 === 1 && "bg-muted/20",
 										densityStyles[densityMode].py,
-										"px-4",
+										"px-4"
 									)}
 								>
 									<div className="space-y-0.5 font-mono text-sm">
-										{visibleColumnsArray.map((col) => {
+										{visibleColumnsArray.map(col => {
 											const value = row[col.name];
 											const formattedValue = formatValue(value, col.name);
 											const isNull = isNullValue(value);
@@ -215,7 +215,7 @@ export function TextView({
 									"group transition-colors hover:bg-muted/30",
 									zebraStriping && rowIndex % 2 === 1 && "bg-muted/20",
 									densityStyles[densityMode].py,
-									"px-4",
+									"px-4"
 								)}
 							>
 								<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">

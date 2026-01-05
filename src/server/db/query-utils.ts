@@ -33,7 +33,7 @@ export async function getTables(db: Kysely<any>): Promise<Table[]> {
 		.orderBy("tablename")
 		.execute();
 
-	return result.map((row) => ({
+	return result.map(row => ({
 		name: row.tablename,
 		schema: row.schemaname,
 	}));
@@ -45,7 +45,7 @@ export async function getTables(db: Kysely<any>): Promise<Table[]> {
 export async function getTableColumns(
 	db: Kysely<any>,
 	tableName: string,
-	schemaName = "public",
+	schemaName = "public"
 ): Promise<Column[]> {
 	const sysDb = db as unknown as Kysely<SystemSchema>;
 	const result = await sysDb
@@ -56,7 +56,7 @@ export async function getTableColumns(
 		.orderBy("ordinal_position")
 		.execute();
 
-	return result.map((row) => ({
+	return result.map(row => ({
 		name: row.column_name,
 		type: row.data_type,
 		nullable: row.is_nullable === "YES",
@@ -69,7 +69,7 @@ export async function getTableColumns(
  */
 export async function executeQuery(
 	db: Kysely<any>,
-	query: string,
+	query: string
 ): Promise<QueryResult> {
 	try {
 		const result = await sql.raw(query).execute(db);
@@ -92,7 +92,7 @@ export async function executeQuery(
 		throw new Error(
 			`Query execution failed: ${
 				error instanceof Error ? error.message : "Unknown error"
-			}`,
+			}`
 		);
 	}
 }
@@ -113,7 +113,7 @@ export async function getSchemas(db: Kysely<any>): Promise<string[]> {
 		.orderBy("schema_name")
 		.execute();
 
-	return result.map((row) => row.schema_name);
+	return result.map(row => row.schema_name);
 }
 
 /**
@@ -122,7 +122,7 @@ export async function getSchemas(db: Kysely<any>): Promise<string[]> {
 export async function getTableSize(
 	db: Kysely<any>,
 	tableName: string,
-	schemaName = "public",
+	schemaName = "public"
 ): Promise<number> {
 	// Use bound parameters for safety instead of raw string injection
 	const result = await sql<{ size: string | number }>`
@@ -142,7 +142,7 @@ export async function getTableSize(
 export async function getTableRowCount(
 	db: Kysely<any>,
 	tableName: string,
-	schemaName = "public",
+	schemaName = "public"
 ): Promise<number> {
 	const result = await db
 		.withSchema(schemaName)
@@ -164,7 +164,7 @@ export async function getTableData(
 	tableName: string,
 	schemaName = "public",
 	limit = 100,
-	offset = 0,
+	offset = 0
 ): Promise<{ rows: Array<Record<string, unknown>>; totalCount: number }> {
 	// Get total count first using builder
 	const countResult = await db

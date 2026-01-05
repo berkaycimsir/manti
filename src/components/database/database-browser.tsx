@@ -23,7 +23,7 @@ export function DatabaseBrowser({ connectionId }: DatabaseBrowserProps) {
 	const { data: columns, isLoading: columnsLoading } =
 		api.database.getTableColumns.useQuery(
 			{ connectionId, tableName: selectedTable || "" },
-			{ enabled: !!selectedTable },
+			{ enabled: !!selectedTable }
 		);
 
 	const executeQueryMutation = api.database.executeQuery.useMutation();
@@ -53,7 +53,7 @@ export function DatabaseBrowser({ connectionId }: DatabaseBrowserProps) {
 						<div className="text-gray-500 text-sm">Loading tables...</div>
 					) : tables?.length ? (
 						<div className="max-h-96 space-y-1 overflow-y-auto">
-							{tables.map((table) => (
+							{tables.map(table => (
 								<button
 									key={`table-${table.name}`}
 									type="button"
@@ -82,7 +82,7 @@ export function DatabaseBrowser({ connectionId }: DatabaseBrowserProps) {
 						<div className="text-gray-500 text-sm">Loading columns...</div>
 					) : columns?.length ? (
 						<div className="max-h-96 space-y-1 overflow-y-auto">
-							{columns.map((col) => (
+							{columns.map(col => (
 								<div key={`col-${col.name}`} className="text-xs">
 									<div className="font-medium">{col.name}</div>
 									<div className="text-gray-500">
@@ -121,7 +121,7 @@ export function DatabaseBrowser({ connectionId }: DatabaseBrowserProps) {
 				<h3 className="font-semibold">SQL Query</h3>
 				<textarea
 					value={query}
-					onChange={(e) => setQuery(e.target.value)}
+					onChange={e => setQuery(e.target.value)}
 					className="h-24 w-full rounded border border-gray-200 p-2 font-mono text-sm"
 					placeholder="SELECT * FROM table_name"
 				/>
@@ -160,7 +160,7 @@ export function DatabaseBrowser({ connectionId }: DatabaseBrowserProps) {
 							<table className="w-full border-collapse text-sm">
 								<thead>
 									<tr className="border-b bg-gray-100">
-										{Object.keys(queryResult.rows[0] || {}).map((key) => (
+										{Object.keys(queryResult.rows[0] || {}).map(key => (
 											<th
 												key={`header-${key}`}
 												className="border-r px-2 py-1 text-left font-medium"

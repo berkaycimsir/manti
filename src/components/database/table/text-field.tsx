@@ -79,17 +79,17 @@ export function TextField({
 
 	const color = useMemo(
 		() => getColumnColor(columnName, isDark),
-		[columnName, isDark],
+		[columnName, isDark]
 	);
 
 	const displayValue = useMemo(
 		() => formatDisplayValue(value, formattedValue),
-		[value, formattedValue],
+		[value, formattedValue]
 	);
 
 	const prettyValue = useMemo(
 		() => getPrettyValue(value, formattedValue),
-		[value, formattedValue],
+		[value, formattedValue]
 	);
 
 	const isTruncated = displayValue.length > maxCharacters;
@@ -174,7 +174,7 @@ export function TextField({
 					<div
 						className={cn(
 							"wrap-anywhere whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-3 font-mono text-sm",
-							typeof value === "object" && "text-xs",
+							typeof value === "object" && "text-xs"
 						)}
 					>
 						{prettyValue}

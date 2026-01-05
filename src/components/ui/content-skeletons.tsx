@@ -33,7 +33,7 @@ export function KanbanSkeleton({ columns = 3 }: { columns?: number }) {
 							{Array.from({ length: colIdx === 0 ? 3 : 2 }).map(
 								(_, cardIdx) => (
 									<QueryCardSkeleton key={cardIdx} />
-								),
+								)
 							)}
 						</div>
 					</div>

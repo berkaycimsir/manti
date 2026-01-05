@@ -37,7 +37,7 @@ export function SqlPreview({
 			<pre
 				className={cn(
 					"overflow-x-auto whitespace-pre-wrap font-mono",
-					variant === "compact" ? "text-xs" : "text-sm",
+					variant === "compact" ? "text-xs" : "text-sm"
 				)}
 			>
 				{displayedSql}

@@ -46,7 +46,7 @@ export function Stack({
 				"flex flex-col",
 				gapClasses[gap],
 				alignClasses[align],
-				className,
+				className
 			)}
 			{...props}
 		>

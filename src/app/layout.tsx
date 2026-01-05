@@ -1,9 +1,7 @@
 import "~/styles/globals.css";
 
-import { StackProvider, StackTheme } from "@stackframe/stack";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
-import { stackClientApp } from "../stack/client";
 
 import { ThemeProvider } from "~/components/theme-provider";
 import { TRPCReactProvider } from "~/trpc/react";
@@ -31,11 +29,7 @@ export default function RootLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					<StackProvider app={stackClientApp}>
-						<StackTheme>
-							<TRPCReactProvider>{children}</TRPCReactProvider>
-						</StackTheme>
-					</StackProvider>
+					<TRPCReactProvider>{children}</TRPCReactProvider>
 				</ThemeProvider>
 			</body>
 		</html>

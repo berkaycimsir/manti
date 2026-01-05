@@ -99,7 +99,7 @@ export function TableToolbar({
 					<Input
 						placeholder="Search all columns..."
 						value={globalSearch}
-						onChange={(e) => setGlobalSearch(e.target.value)}
+						onChange={e => setGlobalSearch(e.target.value)}
 						className="pl-9"
 					/>
 				</div>
@@ -198,13 +198,13 @@ export function TableToolbar({
 							Show All
 						</DropdownMenuItem>
 						<DropdownMenuItem
-							onClick={() => setHiddenColumns(columns.map((c) => c.name))}
+							onClick={() => setHiddenColumns(columns.map(c => c.name))}
 						>
 							<EyeOff className="mr-2 h-4 w-4" />
 							Hide All
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
-						{columns.map((col) => (
+						{columns.map(col => (
 							<DropdownMenuCheckboxItem
 								key={col.name}
 								checked={visibleColumns.has(col.name)}

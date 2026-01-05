@@ -66,7 +66,7 @@ export function Flex({
 				alignClasses[align],
 				justifyClasses[justify],
 				wrap && "flex-wrap",
-				className,
+				className
 			)}
 			{...props}
 		>

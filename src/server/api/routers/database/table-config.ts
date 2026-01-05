@@ -16,7 +16,7 @@ export const tableConfigRouter = createTRPCRouter({
 			z.object({
 				connectionId: z.number(),
 				tableName: z.string(),
-			}),
+			})
 		)
 		.query(async ({ ctx, input }) => {
 			const transformations = await ctx.db
@@ -26,8 +26,8 @@ export const tableConfigRouter = createTRPCRouter({
 					and(
 						eq(columnTransformations.userId, ctx.userId),
 						eq(columnTransformations.connectionId, input.connectionId),
-						eq(columnTransformations.tableName, input.tableName),
-					),
+						eq(columnTransformations.tableName, input.tableName)
+					)
 				);
 
 			return transformations;
@@ -56,7 +56,7 @@ export const tableConfigRouter = createTRPCRouter({
 				]),
 				options: z.record(z.unknown()).optional(),
 				isEnabled: z.boolean().default(true),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			// Check if transformation already exists for this column
@@ -68,8 +68,8 @@ export const tableConfigRouter = createTRPCRouter({
 						eq(columnTransformations.userId, ctx.userId),
 						eq(columnTransformations.connectionId, input.connectionId),
 						eq(columnTransformations.tableName, input.tableName),
-						eq(columnTransformations.columnName, input.columnName),
-					),
+						eq(columnTransformations.columnName, input.columnName)
+					)
 				);
 
 			if (existing.length > 0) {
@@ -134,7 +134,7 @@ export const tableConfigRouter = createTRPCRouter({
 					.optional(),
 				options: z.record(z.unknown()).optional(),
 				isEnabled: z.boolean().optional(),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			const result = await ctx.db
@@ -149,8 +149,8 @@ export const tableConfigRouter = createTRPCRouter({
 				.where(
 					and(
 						eq(columnTransformations.id, input.id),
-						eq(columnTransformations.userId, ctx.userId),
-					),
+						eq(columnTransformations.userId, ctx.userId)
+					)
 				)
 				.returning();
 
@@ -175,8 +175,8 @@ export const tableConfigRouter = createTRPCRouter({
 				.where(
 					and(
 						eq(columnTransformations.id, input.id),
-						eq(columnTransformations.userId, ctx.userId),
-					),
+						eq(columnTransformations.userId, ctx.userId)
+					)
 				)
 				.returning();
 
@@ -200,7 +200,7 @@ export const tableConfigRouter = createTRPCRouter({
 			z.object({
 				connectionId: z.number(),
 				tableName: z.string(),
-			}),
+			})
 		)
 		.query(async ({ ctx, input }) => {
 			const filters = await ctx.db
@@ -210,8 +210,8 @@ export const tableConfigRouter = createTRPCRouter({
 					and(
 						eq(columnFilters.userId, ctx.userId),
 						eq(columnFilters.connectionId, input.connectionId),
-						eq(columnFilters.tableName, input.tableName),
-					),
+						eq(columnFilters.tableName, input.tableName)
+					)
 				);
 
 			return filters;
@@ -242,7 +242,7 @@ export const tableConfigRouter = createTRPCRouter({
 				filterValue: z.string().nullable().optional(),
 				filterValueEnd: z.string().nullable().optional(),
 				isEnabled: z.boolean().default(true),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			const result = await ctx.db
@@ -287,7 +287,7 @@ export const tableConfigRouter = createTRPCRouter({
 				filterValue: z.string().nullable().optional(),
 				filterValueEnd: z.string().nullable().optional(),
 				isEnabled: z.boolean().optional(),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			const { id, ...updates } = input;
@@ -296,7 +296,7 @@ export const tableConfigRouter = createTRPCRouter({
 				.update(columnFilters)
 				.set(updates)
 				.where(
-					and(eq(columnFilters.id, id), eq(columnFilters.userId, ctx.userId)),
+					and(eq(columnFilters.id, id), eq(columnFilters.userId, ctx.userId))
 				)
 				.returning();
 
@@ -321,8 +321,8 @@ export const tableConfigRouter = createTRPCRouter({
 				.where(
 					and(
 						eq(columnFilters.id, input.id),
-						eq(columnFilters.userId, ctx.userId),
-					),
+						eq(columnFilters.userId, ctx.userId)
+					)
 				)
 				.returning();
 

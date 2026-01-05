@@ -8,23 +8,23 @@ interface TableState {
 		dbName: string,
 		tableName: string,
 		columnName: string,
-		width: number,
+		width: number
 	) => void;
 	setRowHeight: (
 		dbName: string,
 		tableName: string,
 		rowKey: string,
-		height: number,
+		height: number
 	) => void;
 	getColumnWidth: (
 		dbName: string,
 		tableName: string,
-		columnName: string,
+		columnName: string
 	) => number | undefined;
 	getRowHeight: (
 		dbName: string,
 		tableName: string,
-		rowKey: string,
+		rowKey: string
 	) => number | undefined;
 }
 
@@ -34,14 +34,14 @@ export const useTableStore = create<TableState>()(
 			columnWidths: {},
 			rowHeights: {},
 			setColumnWidth: (dbName, tableName, columnName, width) =>
-				set((state) => ({
+				set(state => ({
 					columnWidths: {
 						...state.columnWidths,
 						[`${dbName}-${tableName}-${columnName}`]: width,
 					},
 				})),
 			setRowHeight: (dbName, tableName, rowKey, height) =>
-				set((state) => ({
+				set(state => ({
 					rowHeights: {
 						...state.rowHeights,
 						[`${dbName}-${tableName}-${rowKey}`]: height,
@@ -54,6 +54,6 @@ export const useTableStore = create<TableState>()(
 		}),
 		{
 			name: "table-storage",
-		},
-	),
+		}
+	)
 );

@@ -34,7 +34,7 @@ export function Container({
 				"overflow-hidden rounded-lg border border-border",
 				fullWidth && "w-full",
 				paddingClasses[padding],
-				className,
+				className
 			)}
 			{...props}
 		>

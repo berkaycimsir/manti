@@ -29,15 +29,15 @@ export function useTableCopy({
 					acc[col.name] = row[col.name];
 					return acc;
 				},
-				{} as Record<string, unknown>,
+				{} as Record<string, unknown>
 			);
 			navigator.clipboard.writeText(JSON.stringify(rowData, null, 2));
 		},
-		[visibleColumnsArray],
+		[visibleColumnsArray]
 	);
 
 	const copySelectedRows = useCallback(() => {
-		const selected = Array.from(selectedRows).map((i) => sortedRows[i]);
+		const selected = Array.from(selectedRows).map(i => sortedRows[i]);
 		navigator.clipboard.writeText(JSON.stringify(selected, null, 2));
 	}, [selectedRows, sortedRows]);
 
@@ -61,10 +61,10 @@ export function useTableExport({
 	tableName,
 }: UseTableExportProps) {
 	const exportCSV = useCallback(() => {
-		const headers = visibleColumnsArray.map((c) => c.name).join(",");
-		const csvRows = sortedRows.map((row) =>
+		const headers = visibleColumnsArray.map(c => c.name).join(",");
+		const csvRows = sortedRows.map(row =>
 			visibleColumnsArray
-				.map((col) => {
+				.map(col => {
 					const val = row[col.name];
 					if (val === null || val === undefined) return "";
 					const str = String(val);
@@ -73,7 +73,7 @@ export function useTableExport({
 					}
 					return str;
 				})
-				.join(","),
+				.join(",")
 		);
 		const csv = [headers, ...csvRows].join("\n");
 		const blob = new Blob([csv], { type: "text/csv" });
@@ -86,14 +86,14 @@ export function useTableExport({
 	}, [sortedRows, visibleColumnsArray, tableName]);
 
 	const exportJSON = useCallback(() => {
-		const data = sortedRows.map((row) =>
+		const data = sortedRows.map(row =>
 			visibleColumnsArray.reduce(
 				(acc, col) => {
 					acc[col.name] = row[col.name];
 					return acc;
 				},
-				{} as Record<string, unknown>,
-			),
+				{} as Record<string, unknown>
+			)
 		);
 		const json = JSON.stringify(data, null, 2);
 		const blob = new Blob([json], { type: "application/json" });
@@ -120,7 +120,7 @@ export function useTableSelection({ sortedRows }: UseTableSelectionProps) {
 	const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
 
 	const toggleRowExpansion = useCallback((rowIndex: number) => {
-		setExpandedRows((prev) => {
+		setExpandedRows(prev => {
 			const newExpanded = new Set(prev);
 			if (newExpanded.has(rowIndex)) {
 				newExpanded.delete(rowIndex);
@@ -132,7 +132,7 @@ export function useTableSelection({ sortedRows }: UseTableSelectionProps) {
 	}, []);
 
 	const toggleRowSelection = useCallback((rowIndex: number) => {
-		setSelectedRows((prev) => {
+		setSelectedRows(prev => {
 			const newSelected = new Set(prev);
 			if (newSelected.has(rowIndex)) {
 				newSelected.delete(rowIndex);
@@ -144,7 +144,7 @@ export function useTableSelection({ sortedRows }: UseTableSelectionProps) {
 	}, []);
 
 	const toggleAllRows = useCallback(() => {
-		setSelectedRows((prev) => {
+		setSelectedRows(prev => {
 			if (prev.size === sortedRows.length) {
 				return new Set();
 			}
@@ -181,11 +181,11 @@ export function useTableSort({
 	} | null>(
 		initialColumn
 			? { column: initialColumn, direction: initialDirection ?? "asc" }
-			: null,
+			: null
 	);
 
 	const handleSort = useCallback((columnName: string) => {
-		setSortConfig((prev) => {
+		setSortConfig(prev => {
 			if (prev?.column === columnName) {
 				if (prev.direction === "asc") {
 					return { column: columnName, direction: "desc" };
@@ -209,14 +209,14 @@ export function useTableResize(
 		dbName: string,
 		tableName: string,
 		colName: string,
-		width: number,
+		width: number
 	) => void,
 	setRowHeight: (
 		dbName: string,
 		tableName: string,
 		rowKey: string,
-		height: number,
-	) => void,
+		height: number
+	) => void
 ) {
 	const [resizingCol, setResizingCol] = useState<string | null>(null);
 	const [resizingRow, setResizingRow] = useState<string | null>(null);
@@ -276,7 +276,7 @@ export function useTableResize(
 			setResizeStartSize(currentWidth);
 			document.body.style.cursor = "col-resize";
 		},
-		[],
+		[]
 	);
 
 	const startRowResize = useCallback((e: React.MouseEvent, rowKey: string) => {

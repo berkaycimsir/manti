@@ -18,8 +18,8 @@ export const tabRouter = createTRPCRouter({
 				.where(
 					and(
 						eq(queryTabs.connectionId, input.connectionId),
-						eq(queryTabs.userId, ctx.userId),
-					),
+						eq(queryTabs.userId, ctx.userId)
+					)
 				)
 				.orderBy(queryTabs.position);
 
@@ -34,14 +34,14 @@ export const tabRouter = createTRPCRouter({
 			z.object({
 				connectionId: z.number(),
 				name: z.string().min(1, "Tab name is required"),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			// Check connection exists
 			const connection = await ctx.db.query.databaseConnections.findFirst({
 				where: and(
 					eq(databaseConnections.id, input.connectionId),
-					eq(databaseConnections.userId, ctx.userId),
+					eq(databaseConnections.userId, ctx.userId)
 				),
 			});
 
@@ -59,8 +59,8 @@ export const tabRouter = createTRPCRouter({
 				.where(
 					and(
 						eq(queryTabs.connectionId, input.connectionId),
-						eq(queryTabs.userId, ctx.userId),
-					),
+						eq(queryTabs.userId, ctx.userId)
+					)
 				)
 				.orderBy(desc(queryTabs.position))
 				.limit(1);
@@ -89,7 +89,7 @@ export const tabRouter = createTRPCRouter({
 				id: z.number(),
 				name: z.string().min(1).optional(),
 				position: z.number().optional(),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			// Only include defined fields in the update
@@ -109,7 +109,7 @@ export const tabRouter = createTRPCRouter({
 				.update(queryTabs)
 				.set(updateData)
 				.where(
-					and(eq(queryTabs.id, input.id), eq(queryTabs.userId, ctx.userId)),
+					and(eq(queryTabs.id, input.id), eq(queryTabs.userId, ctx.userId))
 				)
 				.returning();
 
@@ -132,7 +132,7 @@ export const tabRouter = createTRPCRouter({
 			const result = await ctx.db
 				.delete(queryTabs)
 				.where(
-					and(eq(queryTabs.id, input.id), eq(queryTabs.userId, ctx.userId)),
+					and(eq(queryTabs.id, input.id), eq(queryTabs.userId, ctx.userId))
 				)
 				.returning();
 

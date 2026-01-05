@@ -6,7 +6,7 @@ import { databaseConnections } from "~/server/db/schema";
  * Mark a database connection as inactive in the database.
  */
 export async function markConnectionAsInactive(
-	connectionId: number,
+	connectionId: number
 ): Promise<void> {
 	try {
 		await db
@@ -15,12 +15,12 @@ export async function markConnectionAsInactive(
 			.where(eq(databaseConnections.id, connectionId));
 
 		console.log(
-			`[ConnectionState] Marked connection ${connectionId} as inactive`,
+			`[ConnectionState] Marked connection ${connectionId} as inactive`
 		);
 	} catch (error) {
 		console.error(
 			`[ConnectionState] Failed to mark connection ${connectionId} as inactive:`,
-			error,
+			error
 		);
 		throw error;
 	}
@@ -31,7 +31,7 @@ export async function markConnectionAsInactive(
  * Also marks the connection as active.
  */
 export async function updateConnectionLastUsed(
-	connectionId: number,
+	connectionId: number
 ): Promise<void> {
 	try {
 		await db
@@ -41,7 +41,7 @@ export async function updateConnectionLastUsed(
 	} catch (error) {
 		console.error(
 			`[ConnectionState] Failed to update lastUsedAt for connection ${connectionId}:`,
-			error,
+			error
 		);
 		// Non-critical - don't throw
 	}
@@ -51,7 +51,7 @@ export async function updateConnectionLastUsed(
  * Get the lastUsedAt timestamp for a connection.
  */
 export async function getConnectionLastUsed(
-	connectionId: number,
+	connectionId: number
 ): Promise<Date | null> {
 	try {
 		const result = await db
@@ -63,7 +63,7 @@ export async function getConnectionLastUsed(
 	} catch (error) {
 		console.error(
 			`[ConnectionState] Failed to get lastUsedAt for connection ${connectionId}:`,
-			error,
+			error
 		);
 		return null;
 	}

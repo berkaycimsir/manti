@@ -68,7 +68,7 @@ class DatabaseConnectionPool {
 	 */
 	async getConnection(
 		connectionConfig: DatabaseConnection,
-		options: { updateLastUsed?: boolean } = { updateLastUsed: true },
+		options: { updateLastUsed?: boolean } = { updateLastUsed: true }
 	): Promise<AnyKysely> {
 		const existing = this.connections.get(connectionConfig.id);
 
@@ -83,13 +83,13 @@ class DatabaseConnectionPool {
 		}
 
 		console.log(
-			`[ConnectionPool] Creating new connection ${connectionConfig.id}`,
+			`[ConnectionPool] Creating new connection ${connectionConfig.id}`
 		);
 
 		// If pool is full, evict the least recently used connection
 		if (this.connections.size >= this.maxPoolSize) {
 			console.log(
-				`[ConnectionPool] Pool at max size (${this.maxPoolSize}), finding LRU connection to evict`,
+				`[ConnectionPool] Pool at max size (${this.maxPoolSize}), finding LRU connection to evict`
 			);
 
 			// Find the connection with the oldest lastUsed timestamp
@@ -105,17 +105,17 @@ class DatabaseConnectionPool {
 
 			if (lruConnectionId !== null) {
 				console.log(
-					`[ConnectionPool] Evicting LRU connection ${lruConnectionId}`,
+					`[ConnectionPool] Evicting LRU connection ${lruConnectionId}`
 				);
 
 				const entryToClose = this.connections.get(lruConnectionId);
 				if (entryToClose) {
 					entryToClose.closing = true;
 					this.connections.delete(lruConnectionId);
-					entryToClose.pool.end().catch((err) => {
+					entryToClose.pool.end().catch(err => {
 						console.error(
 							`Error closing evicted connection pool ${lruConnectionId}:`,
-							err,
+							err
 						);
 					});
 				}
@@ -134,8 +134,8 @@ class DatabaseConnectionPool {
 				`[ConnectionPool] Restored lastUsed for connection ${
 					connectionConfig.id
 				}: ${Math.round(
-					(Date.now() - persistedLastUsed.getTime()) / 1000,
-				)}s ago`,
+					(Date.now() - persistedLastUsed.getTime()) / 1000
+				)}s ago`
 			);
 		}
 
@@ -154,7 +154,7 @@ class DatabaseConnectionPool {
 		}
 
 		console.log(
-			`[ConnectionPool] Connection ${connectionConfig.id} created - Total connections: ${this.connections.size}`,
+			`[ConnectionPool] Connection ${connectionConfig.id} created - Total connections: ${this.connections.size}`
 		);
 		return db;
 	}
@@ -170,7 +170,7 @@ class DatabaseConnectionPool {
 				throw new Error("Connection string is required");
 			}
 			connectionString = decryptSensitiveData(
-				connectionConfig.connectionString,
+				connectionConfig.connectionString
 			);
 		} else {
 			// Build connection string from manual inputs
@@ -225,7 +225,7 @@ class DatabaseConnectionPool {
 	 */
 	private async cleanupIdleConnections(): Promise<void> {
 		console.log(
-			`[ConnectionPool] Cleanup started - Active connections: ${this.connections.size}`,
+			`[ConnectionPool] Cleanup started - Active connections: ${this.connections.size}`
 		);
 		const now = Date.now();
 		let cleanedCount = 0;
@@ -234,8 +234,8 @@ class DatabaseConnectionPool {
 			const idleTime = now - entry.lastUsed;
 			console.log(
 				`[ConnectionPool] Connection ${id}: idle for ${Math.round(
-					idleTime / 1000,
-				)}s (timeout: ${Math.round(this.idleTimeout / 1000)}s)`,
+					idleTime / 1000
+				)}s (timeout: ${Math.round(this.idleTimeout / 1000)}s)`
 			);
 
 			if (idleTime > this.idleTimeout && !entry.closing) {
@@ -251,7 +251,7 @@ class DatabaseConnectionPool {
 				}
 
 				// Close the connection pool
-				entry.pool.end().catch((err) => {
+				entry.pool.end().catch(err => {
 					console.error(`Error closing connection pool ${id}:`, err);
 				});
 
@@ -260,7 +260,7 @@ class DatabaseConnectionPool {
 		}
 
 		console.log(
-			`[ConnectionPool] Cleanup completed - Cleaned: ${cleanedCount}`,
+			`[ConnectionPool] Cleanup completed - Cleaned: ${cleanedCount}`
 		);
 	}
 
@@ -275,13 +275,13 @@ class DatabaseConnectionPool {
 		}
 
 		const promises = Array.from(this.connections.values())
-			.filter((entry) => !entry.closing)
-			.map((entry) => {
+			.filter(entry => !entry.closing)
+			.map(entry => {
 				entry.closing = true;
-				return entry.pool.end().catch((err) => {
+				return entry.pool.end().catch(err => {
 					console.error(
 						`Error closing connection pool ${entry.connectionId}:`,
-						err,
+						err
 					);
 				});
 			});

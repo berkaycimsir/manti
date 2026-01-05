@@ -93,7 +93,7 @@ function formatDate(value: unknown, options: Record<string, unknown>): string {
  */
 function formatNumber(
 	value: unknown,
-	options: Record<string, unknown>,
+	options: Record<string, unknown>
 ): string {
 	if (value === null || value === undefined) return "∅";
 
@@ -109,7 +109,7 @@ function formatNumber(
 	const parts = formatted.split(".");
 	parts[0] = (parts[0] ?? "").replace(
 		/\B(?=(\d{3})+(?!\d))/g,
-		thousandsSeparator,
+		thousandsSeparator
 	);
 
 	return `${prefix}${parts.join(".")}${suffix}`;
@@ -120,7 +120,7 @@ function formatNumber(
  */
 function formatBoolean(
 	value: unknown,
-	options: Record<string, unknown>,
+	options: Record<string, unknown>
 ): string {
 	if (value === null || value === undefined) return "∅";
 
@@ -160,7 +160,7 @@ function formatJson(value: unknown, options: Record<string, unknown>): string {
  */
 function truncateText(
 	value: unknown,
-	options: Record<string, unknown>,
+	options: Record<string, unknown>
 ): string {
 	if (value === null || value === undefined) return "∅";
 
@@ -201,7 +201,7 @@ function maskData(value: unknown, options: Record<string, unknown>): string {
 export function applyTransformation(
 	value: unknown,
 	type: TransformationType,
-	options: Record<string, unknown>,
+	options: Record<string, unknown>
 ): string {
 	switch (type) {
 		case "date":
@@ -242,20 +242,20 @@ export function applyTransformation(
  */
 export function applyTransformationsToRow(
 	row: Record<string, unknown>,
-	transformations: TransformationConfig[],
+	transformations: TransformationConfig[]
 ): Record<string, string> {
 	const result: Record<string, string> = {};
 
 	for (const [key, value] of Object.entries(row)) {
 		const transformation = transformations.find(
-			(t) => t.columnName === key && t.isEnabled,
+			t => t.columnName === key && t.isEnabled
 		);
 
 		if (transformation) {
 			result[key] = applyTransformation(
 				value,
 				transformation.transformationType,
-				transformation.options,
+				transformation.options
 			);
 		} else {
 			// Default formatting

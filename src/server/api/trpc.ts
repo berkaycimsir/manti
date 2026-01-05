@@ -10,8 +10,9 @@ import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { headers } from "next/headers";
+import { auth } from "~/lib/auth";
 import { db } from "~/server/db";
-import { stackServerApp } from "~/stack/server";
 
 /**
  * 1. CONTEXT
@@ -26,10 +27,14 @@ import { stackServerApp } from "~/stack/server";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-	const user = await stackServerApp.getUser();
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
 	return {
 		db,
-		user,
+		user: session?.user,
+		session: session?.session,
 		...opts,
 	};
 };

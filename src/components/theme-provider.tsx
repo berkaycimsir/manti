@@ -7,7 +7,7 @@ import { useThemeStore } from "~/stores/theme-store";
 import type { ThemeColor } from "~/stores/theme-store";
 
 function ThemeWatcher() {
-	const color = useThemeStore((state) => state.color);
+	const color = useThemeStore(state => state.color);
 
 	React.useEffect(() => {
 		const themes: ThemeColor[] = [
@@ -20,7 +20,7 @@ function ThemeWatcher() {
 			"yellow",
 		];
 		// Remove all existing theme classes
-		document.body.classList.remove(...themes.map((t) => `theme-${t}`));
+		document.body.classList.remove(...themes.map(t => `theme-${t}`));
 
 		// Add current theme class if not default (zinc)
 		if (color !== "zinc") {

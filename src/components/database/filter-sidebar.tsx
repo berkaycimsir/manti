@@ -154,16 +154,16 @@ const FILTER_OPTIONS: FilterOption[] = [
 ];
 
 function getFilterOption(type: FilterType): FilterOption | undefined {
-	return FILTER_OPTIONS.find((opt) => opt.type === type);
+	return FILTER_OPTIONS.find(opt => opt.type === type);
 }
 
 function getFilterIcon(type: string) {
-	const option = FILTER_OPTIONS.find((opt) => opt.type === type);
+	const option = FILTER_OPTIONS.find(opt => opt.type === type);
 	return option?.icon ?? <Filter className="h-4 w-4" />;
 }
 
 function getFilterLabel(type: string) {
-	const option = FILTER_OPTIONS.find((opt) => opt.type === type);
+	const option = FILTER_OPTIONS.find(opt => opt.type === type);
 	return option?.label ?? type;
 }
 
@@ -252,7 +252,7 @@ export function FilterSidebar({
 
 	// Get columns that don't have filters yet
 	const _columnsWithoutFilters = columns.filter(
-		(col) => !filters.some((f) => f.columnName === col.name),
+		col => !filters.some(f => f.columnName === col.name)
 	);
 
 	if (!isOpen) return null;
@@ -263,7 +263,7 @@ export function FilterSidebar({
 			<div
 				className="fixed inset-0 z-40 bg-black/50"
 				onClick={onClose}
-				onKeyDown={(e) => e.key === "Escape" && onClose()}
+				onKeyDown={e => e.key === "Escape" && onClose()}
 				role="button"
 				tabIndex={0}
 				aria-label="Close sidebar"
@@ -296,9 +296,9 @@ export function FilterSidebar({
 							{filters.length > 0 && (
 								<div className="space-y-3">
 									<h3 className="font-medium text-foreground text-sm">
-										Active Filters ({filters.filter((f) => f.isEnabled).length})
+										Active Filters ({filters.filter(f => f.isEnabled).length})
 									</h3>
-									{filters.map((filter) => (
+									{filters.map(filter => (
 										<Card
 											key={filter.id}
 											className={cn("p-3", !filter.isEnabled && "opacity-50")}
@@ -330,12 +330,12 @@ export function FilterSidebar({
 														type="button"
 														className={cn(
 															"relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-															filter.isEnabled ? "bg-primary" : "bg-muted",
+															filter.isEnabled ? "bg-primary" : "bg-muted"
 														)}
 														onClick={() =>
 															handleToggleEnabled(
 																filter.id,
-																filter.isEnabled ?? true,
+																filter.isEnabled ?? true
 															)
 														}
 													>
@@ -344,7 +344,7 @@ export function FilterSidebar({
 																"inline-block h-4 w-4 rounded-full bg-background shadow-sm transition-transform",
 																filter.isEnabled
 																	? "translate-x-6"
-																	: "translate-x-1",
+																	: "translate-x-1"
 															)}
 														/>
 													</button>
@@ -420,7 +420,7 @@ export function FilterSidebar({
 																: "Enter filter value..."
 														}
 														value={filterValue}
-														onChange={(e) => setFilterValue(e.target.value)}
+														onChange={e => setFilterValue(e.target.value)}
 													/>
 												)}
 
@@ -429,7 +429,7 @@ export function FilterSidebar({
 													<Input
 														placeholder="Enter end value..."
 														value={filterValueEnd}
-														onChange={(e) => setFilterValueEnd(e.target.value)}
+														onChange={e => setFilterValueEnd(e.target.value)}
 													/>
 												)}
 
@@ -450,7 +450,7 @@ export function FilterSidebar({
 											</div>
 										) : (
 											<div className="grid grid-cols-2 gap-2">
-												{FILTER_OPTIONS.map((option) => (
+												{FILTER_OPTIONS.map(option => (
 													<Button
 														key={option.type}
 														variant="outline"
@@ -485,9 +485,9 @@ export function FilterSidebar({
 												</Button>
 											</DropdownMenuTrigger>
 											<DropdownMenuContent className="max-h-64 w-64 overflow-y-auto">
-												{columns.map((col) => {
+												{columns.map(col => {
 													const hasFilter = filters.some(
-														(f) => f.columnName === col.name,
+														f => f.columnName === col.name
 													);
 													return (
 														<DropdownMenuItem
@@ -535,7 +535,7 @@ export function FilterSidebar({
 				<div className="border-border border-t p-4">
 					<div className="flex items-center justify-between text-muted-foreground text-xs">
 						<span>
-							{filters.filter((f) => f.isEnabled).length} active filter(s)
+							{filters.filter(f => f.isEnabled).length} active filter(s)
 						</span>
 						{filters.length > 0 && (
 							<Button
@@ -625,9 +625,7 @@ export function applyFilter(value: unknown, filter: FilterConfig): boolean {
 		case "is_not_null":
 			return value !== null && value !== undefined && strValue !== "";
 		case "in_list": {
-			const listValues = filterVal
-				.split(",")
-				.map((v) => v.trim().toLowerCase());
+			const listValues = filterVal.split(",").map(v => v.trim().toLowerCase());
 			return listValues.includes(strValue.toLowerCase());
 		}
 		default:

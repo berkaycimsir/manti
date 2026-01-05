@@ -131,9 +131,9 @@ export function DisplayOptionsDropdown({
 								min={20}
 								max={1000}
 								value={maxCharacters}
-								onChange={(e) =>
+								onChange={e =>
 									onMaxCharactersChange(
-										Math.min(1000, Math.max(20, Number(e.target.value))),
+										Math.min(1000, Math.max(20, Number(e.target.value)))
 									)
 								}
 								className="h-8"

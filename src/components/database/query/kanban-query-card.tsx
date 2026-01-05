@@ -66,7 +66,7 @@ export function KanbanQueryCard({
 				isOverlay
 					? "cursor-grabbing shadow-xl ring-2 ring-primary"
 					: "cursor-pointer bg-card hover:border-primary/50 hover:shadow-md",
-				"touch-none", // Important for dnd-kit pointer sensors
+				"touch-none" // Important for dnd-kit pointer sensors
 			)}
 			onClick={handleCardClick}
 			{...dragHandleProps}
@@ -85,18 +85,18 @@ export function KanbanQueryCard({
 								variant="ghost"
 								size="icon"
 								className="-mr-1 h-6 w-6 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
-								onClick={(e) => {
+								onClick={e => {
 									e.stopPropagation();
 								}}
-								onPointerDown={(e) => e.stopPropagation()}
-								onMouseDown={(e) => e.stopPropagation()}
+								onPointerDown={e => e.stopPropagation()}
+								onMouseDown={e => e.stopPropagation()}
 							>
 								<MoreHorizontal className="h-4 w-4 text-muted-foreground" />
 							</Button>
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="end">
 							<DropdownMenuItem
-								onClick={(e) => {
+								onClick={e => {
 									e.stopPropagation();
 									router.push(`/home/${dbname}/query/show?id=${query.id}`);
 								}}
@@ -104,7 +104,7 @@ export function KanbanQueryCard({
 								<Eye className="mr-2 h-4 w-4" /> View Details
 							</DropdownMenuItem>
 							<DropdownMenuItem
-								onClick={(e) => {
+								onClick={e => {
 									e.stopPropagation();
 									onEdit();
 								}}
@@ -112,7 +112,7 @@ export function KanbanQueryCard({
 								<Pencil className="mr-2 h-4 w-4" /> Edit
 							</DropdownMenuItem>
 							<DropdownMenuItem
-								onClick={(e) => {
+								onClick={e => {
 									e.stopPropagation();
 									onDelete(e as any);
 								}}
@@ -157,12 +157,12 @@ export function KanbanQueryCard({
 					size="icon"
 					variant="ghost"
 					className="h-7 w-7 transition-colors hover:bg-primary/10 hover:text-primary"
-					onClick={(e) => {
+					onClick={e => {
 						e.stopPropagation();
 						onExecute(e);
 					}}
-					onPointerDown={(e) => e.stopPropagation()}
-					onMouseDown={(e) => e.stopPropagation()}
+					onPointerDown={e => e.stopPropagation()}
+					onMouseDown={e => e.stopPropagation()}
 					disabled={isExecuting}
 					title="Run Query"
 				>

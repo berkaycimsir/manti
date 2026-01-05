@@ -26,7 +26,7 @@ interface TextViewOptionsState {
 	setAlignmentMode: (
 		dbName: string,
 		tableName: string,
-		mode: TextViewAlignmentMode,
+		mode: TextViewAlignmentMode
 	) => void;
 	getOptions: (dbName: string, tableName: string) => TextViewOptions;
 }
@@ -36,7 +36,7 @@ export const useTextViewOptionsStore = create<TextViewOptionsState>()(
 		(set, get) => ({
 			options: {},
 			setMaxCharacters: (dbName, tableName, value) =>
-				set((state) => {
+				set(state => {
 					const key = `${dbName}-${tableName}`;
 					const current = state.options[key] ?? defaultTextViewOptions;
 					return {
@@ -47,7 +47,7 @@ export const useTextViewOptionsStore = create<TextViewOptionsState>()(
 					};
 				}),
 			setAlignmentMode: (dbName, tableName, mode) =>
-				set((state) => {
+				set(state => {
 					const key = `${dbName}-${tableName}`;
 					const current = state.options[key] ?? defaultTextViewOptions;
 					return {
@@ -60,8 +60,8 @@ export const useTextViewOptionsStore = create<TextViewOptionsState>()(
 			getOptions: (dbName, tableName) =>
 				get().options[`${dbName}-${tableName}`] ?? defaultTextViewOptions,
 		}),
-		{ name: "text-view-options-storage" },
-	),
+		{ name: "text-view-options-storage" }
+	)
 );
 
 // --- Density Store ---
@@ -70,7 +70,7 @@ interface DensityState {
 	setDensityMode: (
 		dbName: string,
 		tableName: string,
-		mode: DensityMode,
+		mode: DensityMode
 	) => void;
 	getDensityMode: (dbName: string, tableName: string) => DensityMode;
 }
@@ -80,7 +80,7 @@ export const useTableDensityStore = create<DensityState>()(
 		(set, get) => ({
 			densityModes: {},
 			setDensityMode: (dbName, tableName, mode) =>
-				set((state) => ({
+				set(state => ({
 					densityModes: {
 						...state.densityModes,
 						[`${dbName}-${tableName}`]: mode,
@@ -89,8 +89,8 @@ export const useTableDensityStore = create<DensityState>()(
 			getDensityMode: (dbName, tableName) =>
 				get().densityModes[`${dbName}-${tableName}`] ?? "default",
 		}),
-		{ name: "table-density-storage" },
-	),
+		{ name: "table-density-storage" }
+	)
 );
 
 // --- View Mode Store ---
@@ -105,7 +105,7 @@ export const useTableViewModeStore = create<ViewModeState>()(
 		(set, get) => ({
 			viewModes: {},
 			setViewMode: (dbName, tableName, mode) =>
-				set((state) => ({
+				set(state => ({
 					viewModes: {
 						...state.viewModes,
 						[`${dbName}-${tableName}`]: mode,
@@ -114,8 +114,8 @@ export const useTableViewModeStore = create<ViewModeState>()(
 			getViewMode: (dbName, tableName) =>
 				get().viewModes[`${dbName}-${tableName}`] ?? "grid",
 		}),
-		{ name: "table-view-mode-storage" },
-	),
+		{ name: "table-view-mode-storage" }
+	)
 );
 
 // --- Column Visibility & Pinning Store ---
@@ -125,17 +125,17 @@ interface ColumnState {
 	toggleColumnVisibility: (
 		dbName: string,
 		tableName: string,
-		columnName: string,
+		columnName: string
 	) => void;
 	setHiddenColumns: (
 		dbName: string,
 		tableName: string,
-		columns: string[],
+		columns: string[]
 	) => void;
 	toggleColumnPin: (
 		dbName: string,
 		tableName: string,
-		columnName: string,
+		columnName: string
 	) => void;
 	getHiddenColumns: (dbName: string, tableName: string) => string[];
 	getPinnedColumns: (dbName: string, tableName: string) => string[];
@@ -147,7 +147,7 @@ export const useTableColumnStore = create<ColumnState>()(
 			hiddenColumns: {},
 			pinnedColumns: {},
 			toggleColumnVisibility: (dbName, tableName, columnName) =>
-				set((state) => {
+				set(state => {
 					const key = `${dbName}-${tableName}`;
 					const currentHidden = state.hiddenColumns[key] || [];
 					const isHidden = currentHidden.includes(columnName);
@@ -156,20 +156,20 @@ export const useTableColumnStore = create<ColumnState>()(
 						hiddenColumns: {
 							...state.hiddenColumns,
 							[key]: isHidden
-								? currentHidden.filter((c) => c !== columnName)
+								? currentHidden.filter(c => c !== columnName)
 								: [...currentHidden, columnName],
 						},
 					};
 				}),
 			setHiddenColumns: (dbName, tableName, columns) =>
-				set((state) => ({
+				set(state => ({
 					hiddenColumns: {
 						...state.hiddenColumns,
 						[`${dbName}-${tableName}`]: columns,
 					},
 				})),
 			toggleColumnPin: (dbName, tableName, columnName) =>
-				set((state) => {
+				set(state => {
 					const key = `${dbName}-${tableName}`;
 					const currentPinned = state.pinnedColumns[key] || [];
 					const isPinned = currentPinned.includes(columnName);
@@ -178,7 +178,7 @@ export const useTableColumnStore = create<ColumnState>()(
 						pinnedColumns: {
 							...state.pinnedColumns,
 							[key]: isPinned
-								? currentPinned.filter((c) => c !== columnName)
+								? currentPinned.filter(c => c !== columnName)
 								: [...currentPinned, columnName],
 						},
 					};
@@ -188,8 +188,8 @@ export const useTableColumnStore = create<ColumnState>()(
 			getPinnedColumns: (dbName, tableName) =>
 				get().pinnedColumns[`${dbName}-${tableName}`] ?? [],
 		}),
-		{ name: "table-column-storage" },
-	),
+		{ name: "table-column-storage" }
+	)
 );
 
 // --- Table Options Store ---
@@ -215,7 +215,7 @@ interface OptionsState {
 		dbName: string,
 		tableName: string,
 		key: keyof TableOptions,
-		value: boolean,
+		value: boolean
 	) => void;
 	getOptions: (dbName: string, tableName: string) => TableOptions;
 }
@@ -225,7 +225,7 @@ export const useTableOptionsStore = create<OptionsState>()(
 		(set, get) => ({
 			options: {},
 			setOption: (dbName, tableName, key, value) =>
-				set((state) => {
+				set(state => {
 					const dbKey = `${dbName}-${tableName}`;
 					const currentOptions = state.options[dbKey] ?? defaultOptions;
 
@@ -242,6 +242,6 @@ export const useTableOptionsStore = create<OptionsState>()(
 			getOptions: (dbName, tableName) =>
 				get().options[`${dbName}-${tableName}`] ?? defaultOptions,
 		}),
-		{ name: "table-options-storage" },
-	),
+		{ name: "table-options-storage" }
+	)
 );

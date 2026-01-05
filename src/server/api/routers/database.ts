@@ -10,5 +10,5 @@ export const databaseRouter = mergeRouters(
 	tableRouter,
 	queryRouter,
 	tabRouter,
-	tableConfigRouter,
+	tableConfigRouter
 );

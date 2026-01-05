@@ -1,10 +1,11 @@
 import { ArrowRight, Database } from "lucide-react";
+import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import ToggleThemeButton from "~/components/toggle-theme-button";
 import { Button } from "~/components/ui/button";
-import { stackServerApp } from "~/stack/server";
+import { auth } from "~/lib/auth";
 
 const features = [
 	{
@@ -23,7 +24,11 @@ const features = [
 ];
 
 export default async function LandingPage() {
-	if (await stackServerApp.getUser()) redirect("/home");
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	if (session) redirect("/home");
 
 	return (
 		<main className="min-h-screen bg-background text-foreground">
@@ -41,7 +46,7 @@ export default async function LandingPage() {
 					</div>
 					<div className="flex items-center gap-3">
 						<Button asChild size="sm">
-							<Link href="/handler/signin">Sign In</Link>
+							<Link href="/sign-in">Sign In</Link>
 						</Button>
 						<ToggleThemeButton />
 					</div>
@@ -62,7 +67,7 @@ export default async function LandingPage() {
 						<div className="flex flex-col gap-3 pt-4 sm:flex-row">
 							<Button asChild size="lg" className="gap-2">
 								<div>
-									<Link href="/handler/signup">Get Started</Link>
+									<Link href="/sign-up">Get Started</Link>
 									<ArrowRight className="h-4 w-4" />
 								</div>
 							</Button>

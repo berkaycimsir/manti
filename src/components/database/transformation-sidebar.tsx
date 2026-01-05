@@ -160,7 +160,7 @@ export function TransformationSidebar({
 	const { data: transformations = [], isLoading } =
 		api.database.listColumnTransformations.useQuery(
 			{ connectionId, tableName },
-			{ enabled: isOpen },
+			{ enabled: isOpen }
 		);
 
 	// Create transformation mutation
@@ -197,9 +197,9 @@ export function TransformationSidebar({
 
 	const handleAddTransformation = (
 		columnName: string,
-		type: TransformationType,
+		type: TransformationType
 	) => {
-		const option = TRANSFORMATION_OPTIONS.find((o) => o.type === type);
+		const option = TRANSFORMATION_OPTIONS.find(o => o.type === type);
 		createMutation.mutate({
 			connectionId,
 			tableName,
@@ -219,7 +219,7 @@ export function TransformationSidebar({
 
 	const handleUpdateOptions = (
 		id: number,
-		options: Record<string, unknown>,
+		options: Record<string, unknown>
 	) => {
 		updateMutation.mutate({
 			id,
@@ -232,18 +232,18 @@ export function TransformationSidebar({
 	};
 
 	const getTransformationIcon = (type: string) => {
-		const option = TRANSFORMATION_OPTIONS.find((o) => o.type === type);
+		const option = TRANSFORMATION_OPTIONS.find(o => o.type === type);
 		return option?.icon ?? <Settings2 className="h-4 w-4" />;
 	};
 
 	const getTransformationLabel = (type: string) => {
-		const option = TRANSFORMATION_OPTIONS.find((o) => o.type === type);
+		const option = TRANSFORMATION_OPTIONS.find(o => o.type === type);
 		return option?.label ?? type;
 	};
 
 	// Get columns without transformations
 	const columnsWithoutTransformations = columns.filter(
-		(col) => !transformations.some((t) => t.columnName === col.name),
+		col => !transformations.some(t => t.columnName === col.name)
 	);
 
 	if (!isOpen) return null;
@@ -254,7 +254,7 @@ export function TransformationSidebar({
 			<div
 				className="fixed inset-0 z-20 bg-black/50"
 				onClick={onClose}
-				onKeyDown={(e) => e.key === "Escape" && onClose()}
+				onKeyDown={e => e.key === "Escape" && onClose()}
 				role="button"
 				tabIndex={0}
 				aria-label="Close sidebar"
@@ -287,18 +287,18 @@ export function TransformationSidebar({
 									<h3 className="font-medium text-foreground text-sm">
 										Active Transformations
 									</h3>
-									{transformations.map((transformation) => (
+									{transformations.map(transformation => (
 										<Card
 											key={transformation.id}
 											className={cn(
 												"p-3",
-												!transformation.isEnabled && "opacity-50",
+												!transformation.isEnabled && "opacity-50"
 											)}
 										>
 											<div className="flex items-start justify-between">
 												<div className="flex items-center gap-2">
 													{getTransformationIcon(
-														transformation.transformationType,
+														transformation.transformationType
 													)}
 													<div>
 														<p className="font-medium text-foreground text-sm">
@@ -306,7 +306,7 @@ export function TransformationSidebar({
 														</p>
 														<p className="text-muted-foreground text-xs">
 															{getTransformationLabel(
-																transformation.transformationType,
+																transformation.transformationType
 															)}
 														</p>
 													</div>
@@ -318,12 +318,12 @@ export function TransformationSidebar({
 															"relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
 															transformation.isEnabled
 																? "bg-primary"
-																: "bg-muted",
+																: "bg-muted"
 														)}
 														onClick={() =>
 															handleToggleEnabled(
 																transformation.id,
-																transformation.isEnabled ?? true,
+																transformation.isEnabled ?? true
 															)
 														}
 													>
@@ -332,7 +332,7 @@ export function TransformationSidebar({
 																"inline-block h-4 w-4 rounded-full bg-background shadow-sm transition-transform",
 																transformation.isEnabled
 																	? "translate-x-6"
-																	: "translate-x-1",
+																	: "translate-x-1"
 															)}
 														/>
 													</button>
@@ -359,7 +359,7 @@ export function TransformationSidebar({
 															unknown
 														>) ?? {}
 													}
-													onSave={(options) =>
+													onSave={options =>
 														handleUpdateOptions(transformation.id, options)
 													}
 													onCancel={() => setEditingTransformation(null)}
@@ -408,7 +408,7 @@ export function TransformationSidebar({
 													</Button>
 												</div>
 												<div className="grid grid-cols-2 gap-2">
-													{TRANSFORMATION_OPTIONS.map((option) => (
+													{TRANSFORMATION_OPTIONS.map(option => (
 														<Button
 															key={option.type}
 															variant="outline"
@@ -417,7 +417,7 @@ export function TransformationSidebar({
 															onClick={() =>
 																handleAddTransformation(
 																	selectedColumn,
-																	option.type,
+																	option.type
 																)
 															}
 														>
@@ -438,7 +438,7 @@ export function TransformationSidebar({
 													</Button>
 												</DropdownMenuTrigger>
 												<DropdownMenuContent className="max-h-64 w-80 overflow-y-auto">
-													{columnsWithoutTransformations.map((column) => (
+													{columnsWithoutTransformations.map(column => (
 														<DropdownMenuItem
 															key={column.name}
 															onClick={() => setSelectedColumn(column.name)}
@@ -481,7 +481,7 @@ function TransformationOptionsEditor({
 		useState<Record<string, unknown>>(options);
 
 	const updateOption = (key: string, value: unknown) => {
-		setLocalOptions((prev) => ({ ...prev, [key]: value }));
+		setLocalOptions(prev => ({ ...prev, [key]: value }));
 	};
 
 	const renderOptions = () => {
@@ -497,7 +497,7 @@ function TransformationOptionsEditor({
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent>
-								{DATE_FORMATS.map((format) => (
+								{DATE_FORMATS.map(format => (
 									<DropdownMenuItem
 										key={format.value}
 										onClick={() => updateOption("format", format.value)}
@@ -518,7 +518,7 @@ function TransformationOptionsEditor({
 							<Input
 								type="number"
 								value={(localOptions.decimals as number) ?? 2}
-								onChange={(e) =>
+								onChange={e =>
 									updateOption("decimals", Number.parseInt(e.target.value, 10))
 								}
 								className="mt-1 h-8"
@@ -528,7 +528,7 @@ function TransformationOptionsEditor({
 							<span className="text-muted-foreground text-xs">Prefix</span>
 							<Input
 								value={(localOptions.prefix as string) ?? ""}
-								onChange={(e) => updateOption("prefix", e.target.value)}
+								onChange={e => updateOption("prefix", e.target.value)}
 								placeholder="e.g. $"
 								className="mt-1 h-8"
 							/>
@@ -537,7 +537,7 @@ function TransformationOptionsEditor({
 							<span className="text-muted-foreground text-xs">Suffix</span>
 							<Input
 								value={(localOptions.suffix as string) ?? ""}
-								onChange={(e) => updateOption("suffix", e.target.value)}
+								onChange={e => updateOption("suffix", e.target.value)}
 								placeholder="e.g. %"
 								className="mt-1 h-8"
 							/>
@@ -552,7 +552,7 @@ function TransformationOptionsEditor({
 							<span className="text-muted-foreground text-xs">True Label</span>
 							<Input
 								value={(localOptions.trueLabel as string) ?? "✓ Yes"}
-								onChange={(e) => updateOption("trueLabel", e.target.value)}
+								onChange={e => updateOption("trueLabel", e.target.value)}
 								className="mt-1 h-8"
 							/>
 						</div>
@@ -560,7 +560,7 @@ function TransformationOptionsEditor({
 							<span className="text-muted-foreground text-xs">False Label</span>
 							<Input
 								value={(localOptions.falseLabel as string) ?? "✗ No"}
-								onChange={(e) => updateOption("falseLabel", e.target.value)}
+								onChange={e => updateOption("falseLabel", e.target.value)}
 								className="mt-1 h-8"
 							/>
 						</div>
@@ -575,7 +575,7 @@ function TransformationOptionsEditor({
 							<Input
 								type="number"
 								value={(localOptions.maxLength as number) ?? 50}
-								onChange={(e) =>
+								onChange={e =>
 									updateOption("maxLength", Number.parseInt(e.target.value, 10))
 								}
 								className="mt-1 h-8"
@@ -585,7 +585,7 @@ function TransformationOptionsEditor({
 							<span className="text-muted-foreground text-xs">Suffix</span>
 							<Input
 								value={(localOptions.suffix as string) ?? "..."}
-								onChange={(e) => updateOption("suffix", e.target.value)}
+								onChange={e => updateOption("suffix", e.target.value)}
 								className="mt-1 h-8"
 							/>
 						</div>
@@ -601,7 +601,7 @@ function TransformationOptionsEditor({
 							</span>
 							<Input
 								value={(localOptions.maskChar as string) ?? "*"}
-								onChange={(e) => updateOption("maskChar", e.target.value)}
+								onChange={e => updateOption("maskChar", e.target.value)}
 								maxLength={1}
 								className="mt-1 h-8"
 							/>
@@ -613,7 +613,7 @@ function TransformationOptionsEditor({
 							<Input
 								type="number"
 								value={(localOptions.showLast as number) ?? 4}
-								onChange={(e) =>
+								onChange={e =>
 									updateOption("showLast", Number.parseInt(e.target.value, 10))
 								}
 								className="mt-1 h-8"
@@ -629,7 +629,7 @@ function TransformationOptionsEditor({
 						<Input
 							type="number"
 							value={(localOptions.indent as number) ?? 2}
-							onChange={(e) =>
+							onChange={e =>
 								updateOption("indent", Number.parseInt(e.target.value, 10))
 							}
 							className="mt-1 h-8"

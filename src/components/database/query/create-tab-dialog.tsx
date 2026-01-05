@@ -52,7 +52,7 @@ export function CreateTabDialog({
 						<Input
 							id="tab-name"
 							value={name}
-							onChange={(e) => setName(e.target.value)}
+							onChange={e => setName(e.target.value)}
 							placeholder="e.g. Monthly Reports"
 							autoFocus
 						/>

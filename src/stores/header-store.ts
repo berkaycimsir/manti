@@ -33,7 +33,7 @@ interface HeaderState {
 	setHeaderConfig: (config: HeaderConfig | null) => void;
 }
 
-export const useHeaderStore = create<HeaderState>()((set) => ({
+export const useHeaderStore = create<HeaderState>()(set => ({
 	headerConfig: null,
-	setHeaderConfig: (config) => set({ headerConfig: config }),
+	setHeaderConfig: config => set({ headerConfig: config }),
 }));

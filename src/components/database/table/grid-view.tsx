@@ -63,12 +63,12 @@ interface GridViewProps {
 	getColumnWidth: (
 		dbName: string,
 		tableName: string,
-		colName: string,
+		colName: string
 	) => number | undefined;
 	getRowHeight: (
 		dbName: string,
 		tableName: string,
-		rowKey: string,
+		rowKey: string
 	) => number | undefined;
 	toggleAllRows: () => void;
 	toggleRowSelection: (rowIndex: number) => void;
@@ -125,7 +125,7 @@ export function GridView({
 		<div
 			className={cn(
 				"overflow-hidden rounded-lg border border-border",
-				fullWidth && "w-full",
+				fullWidth && "w-full"
 			)}
 		>
 			<div className="max-h-[70vh] overflow-auto">
@@ -136,7 +136,7 @@ export function GridView({
 							<th
 								className={cn(
 									"bg-muted/95 px-2",
-									densityStyles[densityMode].py,
+									densityStyles[densityMode].py
 								)}
 								style={{ width: CHECKBOX_WIDTH, minWidth: CHECKBOX_WIDTH }}
 							>
@@ -155,7 +155,7 @@ export function GridView({
 									className={cn(
 										"bg-muted/95 px-2 text-center font-medium text-muted-foreground",
 										densityStyles[densityMode].py,
-										densityStyles[densityMode].text,
+										densityStyles[densityMode].text
 									)}
 									style={{
 										width: ROW_NUMBER_WIDTH,
@@ -170,7 +170,7 @@ export function GridView({
 							<th
 								className={cn(
 									"bg-muted/95 px-2",
-									densityStyles[densityMode].py,
+									densityStyles[densityMode].py
 								)}
 								style={{
 									width: EXPAND_BUTTON_WIDTH,
@@ -179,9 +179,9 @@ export function GridView({
 							/>
 
 							{/* Column headers */}
-							{visibleColumnsArray.map((col) => {
+							{visibleColumnsArray.map(col => {
 								const hasTransformation = transformations.some(
-									(t) => t.columnName === col.name && t.isEnabled,
+									t => t.columnName === col.name && t.isEnabled
 								);
 								const isPinned = pinnedColumns.has(col.name);
 								const isSorted = sortConfig?.column === col.name;
@@ -194,7 +194,7 @@ export function GridView({
 										key={col.name}
 										className={cn(
 											"group relative border-border border-r px-3 py-1 text-left font-semibold text-foreground last:border-r-0",
-											isPinned && "sticky bg-muted/95",
+											isPinned && "sticky bg-muted/95"
 										)}
 										style={{
 											width,
@@ -212,7 +212,7 @@ export function GridView({
 												<div
 													className={cn(
 														"flex min-w-0 items-center gap-1.5",
-														densityStyles[densityMode].text,
+														densityStyles[densityMode].text
 													)}
 												>
 													<span className="truncate">{col.name}</span>
@@ -246,7 +246,7 @@ export function GridView({
 
 											{/* Filter indicator (if column has active filter) */}
 											{filters.some(
-												(f) => f.columnName === col.name && f.isEnabled,
+												f => f.columnName === col.name && f.isEnabled
 											) && (
 												<span title="Has filter" className="shrink-0">
 													<Filter className="h-3 w-3 text-primary" />
@@ -317,7 +317,7 @@ export function GridView({
 										</div>
 										<div
 											className="absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary"
-											onMouseDown={(e) => startColumnResize(e, col.name)}
+											onMouseDown={e => startColumnResize(e, col.name)}
 										/>
 									</th>
 								);
@@ -340,14 +340,14 @@ export function GridView({
 												zebraStriping &&
 												rowIndex % 2 === 1 &&
 												"bg-muted/30",
-											!isSelected && "hover:bg-muted/50",
+											!isSelected && "hover:bg-muted/50"
 										)}
 									>
 										{/* Selection checkbox */}
 										<td
 											className={cn(
 												"bg-inherit px-2",
-												densityStyles[densityMode].py,
+												densityStyles[densityMode].py
 											)}
 											style={{
 												width: CHECKBOX_WIDTH,
@@ -366,7 +366,7 @@ export function GridView({
 												className={cn(
 													"group/row-header relative bg-inherit px-2 text-center font-mono text-muted-foreground",
 													densityStyles[densityMode].py,
-													densityStyles[densityMode].text,
+													densityStyles[densityMode].text
 												)}
 												style={{
 													width: ROW_NUMBER_WIDTH,
@@ -379,7 +379,7 @@ export function GridView({
 												</div>
 												<div
 													className="absolute bottom-0 left-0 z-50 h-1 w-full cursor-row-resize bg-transparent hover:bg-primary"
-													onMouseDown={(e) => startRowResize(e, rowKey)}
+													onMouseDown={e => startRowResize(e, rowKey)}
 												/>
 											</td>
 										)}
@@ -388,7 +388,7 @@ export function GridView({
 										<td
 											className={cn(
 												"bg-inherit px-2",
-												densityStyles[densityMode].py,
+												densityStyles[densityMode].py
 											)}
 											style={{
 												width: EXPAND_BUTTON_WIDTH,
@@ -412,7 +412,7 @@ export function GridView({
 										</td>
 
 										{/* Data cells */}
-										{visibleColumnsArray.map((col) => {
+										{visibleColumnsArray.map(col => {
 											const cellValue = row[col.name];
 											const formattedValue = formatValue(cellValue, col.name);
 											const cellId = `${rowKey}-${col.name}`;
@@ -428,7 +428,7 @@ export function GridView({
 														"group/cell relative overflow-hidden border-border border-r px-3 last:border-r-0",
 														densityStyles[densityMode].py,
 														isPinned && "sticky bg-inherit",
-														isNull && showNullDistinct && "bg-muted/20",
+														isNull && showNullDistinct && "bg-muted/20"
 													)}
 													style={{
 														width,
@@ -444,7 +444,7 @@ export function GridView({
 																<span
 																	className={cn(
 																		"text-muted-foreground italic",
-																		densityStyles[densityMode].text,
+																		densityStyles[densityMode].text
 																	)}
 																>
 																	∅ null
@@ -502,7 +502,7 @@ export function GridView({
 														</Button>
 													</div>
 													<div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-														{visibleColumnsArray.map((col) => (
+														{visibleColumnsArray.map(col => (
 															<div
 																key={`detail-${rowKey}-${col.name}`}
 																className="rounded border border-border bg-background p-3"

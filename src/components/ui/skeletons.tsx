@@ -19,7 +19,7 @@ export function PageLoadingSkeleton({
 		<Card
 			className={cn(
 				"flex flex-col items-center justify-center p-12 text-center",
-				className,
+				className
 			)}
 		>
 			<div className="mb-4">

@@ -57,7 +57,7 @@ export function ColumnVisibilityDropdown({
 				<DropdownMenuItem onClick={onShowAll}>Show All</DropdownMenuItem>
 				<DropdownMenuItem onClick={onHideAll}>Hide All</DropdownMenuItem>
 				<DropdownMenuSeparator />
-				{columns.map((col) => (
+				{columns.map(col => (
 					<DropdownMenuCheckboxItem
 						key={col.name}
 						checked={!hiddenColumns.includes(col.name)}

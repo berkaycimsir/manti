@@ -54,7 +54,7 @@ export function TruncatedCell({ value, wordWrap }: TruncatedCellProps) {
 	return (
 		<Popover
 			open={isOpen && isTruncated}
-			onOpenChange={(open) => {
+			onOpenChange={open => {
 				if (open) checkTruncation();
 				setIsOpen(open);
 			}}
@@ -66,7 +66,7 @@ export function TruncatedCell({ value, wordWrap }: TruncatedCellProps) {
 						"truncate text-sm transition-colors",
 						isTruncated
 							? "cursor-pointer hover:underline hover:underline-offset-2"
-							: "",
+							: ""
 					)}
 					onMouseEnter={checkTruncation}
 				>

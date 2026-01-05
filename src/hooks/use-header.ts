@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useLayoutEffect } from 'react';
-import { type HeaderConfig, useHeaderStore } from '~/stores/header-store';
+import { useLayoutEffect } from "react";
+import { type HeaderConfig, useHeaderStore } from "~/stores/header-store";
 
 /**
  * Hook for pages to register their header configuration
@@ -20,23 +20,23 @@ import { type HeaderConfig, useHeaderStore } from '~/stores/header-store';
  * });
  */
 export function useHeader(config: HeaderConfig) {
-  const setHeaderConfig = useHeaderStore((state) => state.setHeaderConfig);
+	const setHeaderConfig = useHeaderStore(state => state.setHeaderConfig);
 
-  // Sync config immediately to prevent flash of missing header
-  useLayoutEffect(() => {
-    setHeaderConfig(config);
-  }, [
-    config.title,
-    config.subtitle,
-    config.backHref,
-    config.onBack,
-    config.actions,
-    config.floatingActions,
-    config.tabs,
-    config.activeTab,
-    setHeaderConfig,
-  ]);
+	// Sync config immediately to prevent flash of missing header
+	useLayoutEffect(() => {
+		setHeaderConfig(config);
+	}, [
+		config.title,
+		config.subtitle,
+		config.backHref,
+		config.onBack,
+		config.actions,
+		config.floatingActions,
+		config.tabs,
+		config.activeTab,
+		setHeaderConfig,
+	]);
 }
 
 // Re-export types
-export type { HeaderConfig, TabConfig } from '~/stores/header-store';
+export type { HeaderConfig, TabConfig } from "~/stores/header-store";

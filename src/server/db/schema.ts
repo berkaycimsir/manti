@@ -15,7 +15,11 @@ import {
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `manti_${name}`);
+export const createTable = pgTableCreator(name => `manti_${name}`);
+
+// =============================================================================
+// Application Tables
+// =============================================================================
 
 /**
  * Database connections table - stores user's database connection configs
@@ -51,13 +55,13 @@ export const databaseConnections = createTable(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(table) => ({
+	table => ({
 		userIdIndex: index("db_connections_user_id_idx").on(table.userId),
 		userIdActiveIndex: index("db_connections_user_id_active_idx").on(
 			table.userId,
-			table.isActive,
+			table.isActive
 		),
-	}),
+	})
 );
 
 /**
@@ -78,12 +82,12 @@ export const queryTabs = createTable(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(table) => ({
+	table => ({
 		connectionIdIndex: index("query_tabs_connection_id_idx").on(
-			table.connectionId,
+			table.connectionId
 		),
 		userIdIndex: index("query_tabs_user_id_idx").on(table.userId),
-	}),
+	})
 );
 
 /**
@@ -114,13 +118,13 @@ export const savedQueries = createTable(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(table) => ({
+	table => ({
 		connectionIdIndex: index("saved_queries_connection_id_idx").on(
-			table.connectionId,
+			table.connectionId
 		),
 		userIdIndex: index("saved_queries_user_id_idx").on(table.userId),
 		tabIdIndex: index("saved_queries_tab_id_idx").on(table.tabId),
-	}),
+	})
 );
 
 /**
@@ -163,13 +167,13 @@ export const columnTransformations = createTable(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(table) => ({
+	table => ({
 		connectionTableIndex: index("col_transforms_conn_table_idx").on(
 			table.connectionId,
-			table.tableName,
+			table.tableName
 		),
 		userIdIndex: index("col_transforms_user_id_idx").on(table.userId),
-	}),
+	})
 );
 
 /**
@@ -211,11 +215,11 @@ export const columnFilters = createTable(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(table) => ({
+	table => ({
 		connectionTableIndex: index("col_filters_conn_table_idx").on(
 			table.connectionId,
-			table.tableName,
+			table.tableName
 		),
 		userIdIndex: index("col_filters_user_id_idx").on(table.userId),
-	}),
+	})
 );

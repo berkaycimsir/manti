@@ -17,12 +17,12 @@ interface ThemeState {
 
 export const useThemeStore = create<ThemeState>()(
 	persist(
-		(set) => ({
+		set => ({
 			color: "zinc",
-			setColor: (color) => set({ color }),
+			setColor: color => set({ color }),
 		}),
 		{
 			name: "theme-storage", // unique name for localStorage
-		},
-	),
+		}
+	)
 );

@@ -36,10 +36,10 @@ export function ViewModeToggle({
 		<ToggleGroup
 			type="single"
 			value={value}
-			onValueChange={(val) => val && onValueChange(val as ViewMode)}
+			onValueChange={val => val && onValueChange(val as ViewMode)}
 			className={cn("rounded-md border border-border p-0.5", className)}
 		>
-			{viewModeOptions.map((option) => (
+			{viewModeOptions.map(option => (
 				<ToggleGroupItem
 					key={option.value}
 					value={option.value}

@@ -22,7 +22,7 @@ export default function DatabaseLayout({
 
 	// Fetch connections to get the full name
 	const { data: connections = [] } = api.database.listConnections.useQuery();
-	const currentConnection = connections.find((c) => c.id === connectionId);
+	const currentConnection = connections.find(c => c.id === connectionId);
 
 	const handleBack = () => {
 		void utils.database.listConnections.invalidate();
@@ -66,7 +66,7 @@ export default function DatabaseLayout({
 			{ key: "query", label: "Query", icon: <Code className="h-4 w-4" /> },
 			{ key: "info", label: "Info", icon: <Eye className="h-4 w-4" /> },
 		],
-		[],
+		[]
 	);
 
 	// Register header for dashboard pages (not detail pages)
@@ -82,7 +82,7 @@ export default function DatabaseLayout({
 					tabs,
 					activeTab,
 					onTabChange: handleTabChange,
-				},
+				}
 	);
 
 	// For dashboard pages, wrap children with padding

@@ -47,7 +47,7 @@ export function ConnectionList({ onConnectionSelect }: ConnectionListProps) {
 		<div className="space-y-2">
 			<h2 className="font-semibold text-lg">Your Connections</h2>
 			<div className="space-y-2">
-				{connections.map((conn) => (
+				{connections.map(conn => (
 					<div
 						key={conn.id}
 						className="flex items-center justify-between rounded border border-gray-200 p-3 hover:bg-gray-50"
@@ -55,7 +55,7 @@ export function ConnectionList({ onConnectionSelect }: ConnectionListProps) {
 						<button
 							type="button"
 							onClick={() => onConnectionSelect?.(conn.id)}
-							onKeyUp={(e) => {
+							onKeyUp={e => {
 								if (e.key === "Enter") {
 									onConnectionSelect?.(conn.id);
 								}

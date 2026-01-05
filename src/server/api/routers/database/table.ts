@@ -58,7 +58,7 @@ export const tableRouter = createTRPCRouter({
 				connectionId: z.number(),
 				tableName: z.string(),
 				schemaName: z.string().default("public"),
-			}),
+			})
 		)
 		.query(async ({ ctx, input }) => {
 			try {
@@ -66,7 +66,7 @@ export const tableRouter = createTRPCRouter({
 				const columns = await getTableColumns(
 					db,
 					input.tableName,
-					input.schemaName,
+					input.schemaName
 				);
 				return columns;
 			} catch (error) {
@@ -92,7 +92,7 @@ export const tableRouter = createTRPCRouter({
 				schemaName: z.string().default("public"),
 				limit: z.number().min(1).max(1000).default(100),
 				offset: z.number().min(0).default(0),
-			}),
+			})
 		)
 		.query(async ({ ctx, input }) => {
 			try {
@@ -102,7 +102,7 @@ export const tableRouter = createTRPCRouter({
 					input.tableName,
 					input.schemaName,
 					input.limit,
-					input.offset,
+					input.offset
 				);
 				return data;
 			} catch (error) {

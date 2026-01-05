@@ -18,14 +18,14 @@ export const queryRouter = createTRPCRouter({
 				name: z.string().min(1, "Query name is required"),
 				query: z.string().min(1, "Query is required"),
 				tabId: z.number().nullable().optional(),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			// Validate connection existence for the user
 			const connection = await ctx.db.query.databaseConnections.findFirst({
 				where: and(
 					eq(databaseConnections.id, input.connectionId),
-					eq(databaseConnections.userId, ctx.userId),
+					eq(databaseConnections.userId, ctx.userId)
 				),
 			});
 
@@ -62,8 +62,8 @@ export const queryRouter = createTRPCRouter({
 				.where(
 					and(
 						eq(savedQueries.connectionId, input.connectionId),
-						eq(savedQueries.userId, ctx.userId),
-					),
+						eq(savedQueries.userId, ctx.userId)
+					)
 				)
 				.orderBy(desc(savedQueries.updatedAt));
 
@@ -79,7 +79,7 @@ export const queryRouter = createTRPCRouter({
 			const query = await ctx.db.query.savedQueries.findFirst({
 				where: and(
 					eq(savedQueries.id, input.id),
-					eq(savedQueries.userId, ctx.userId),
+					eq(savedQueries.userId, ctx.userId)
 				),
 			});
 
@@ -104,7 +104,7 @@ export const queryRouter = createTRPCRouter({
 				query: z.string().min(1).optional(),
 				tabId: z.number().nullable().optional(),
 				position: z.number().optional(),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			const result = await ctx.db
@@ -118,8 +118,8 @@ export const queryRouter = createTRPCRouter({
 				.where(
 					and(
 						eq(savedQueries.id, input.id),
-						eq(savedQueries.userId, ctx.userId),
-					),
+						eq(savedQueries.userId, ctx.userId)
+					)
 				)
 				.returning();
 
@@ -144,8 +144,8 @@ export const queryRouter = createTRPCRouter({
 				.where(
 					and(
 						eq(savedQueries.id, input.id),
-						eq(savedQueries.userId, ctx.userId),
-					),
+						eq(savedQueries.userId, ctx.userId)
+					)
 				)
 				.returning();
 
@@ -168,7 +168,7 @@ export const queryRouter = createTRPCRouter({
 			const savedQuery = await ctx.db.query.savedQueries.findFirst({
 				where: and(
 					eq(savedQueries.id, input.id),
-					eq(savedQueries.userId, ctx.userId),
+					eq(savedQueries.userId, ctx.userId)
 				),
 			});
 
@@ -221,7 +221,7 @@ export const queryRouter = createTRPCRouter({
 				name: z.string().min(1, "Query name is required"),
 				query: z.string().min(1, "Query is required"),
 				tabId: z.number().nullable().optional(),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			try {
@@ -268,7 +268,7 @@ export const queryRouter = createTRPCRouter({
 			z.object({
 				connectionId: z.number(),
 				query: z.string().min(1, "Query is required"),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			try {

@@ -19,7 +19,7 @@ export function AddConnectionForm({ onSuccess }: ConnectionFormProps) {
 			setError(null);
 			onSuccess?.();
 		},
-		onError: (err) => {
+		onError: err => {
 			setError(err.message);
 		},
 	});
@@ -95,9 +95,9 @@ export function AddConnectionForm({ onSuccess }: ConnectionFormProps) {
 							type="radio"
 							value="connection_string"
 							checked={connectionType === "connection_string"}
-							onChange={(e) =>
+							onChange={e =>
 								setConnectionType(
-									e.target.value as "connection_string" | "manual",
+									e.target.value as "connection_string" | "manual"
 								)
 							}
 						/>
@@ -108,9 +108,9 @@ export function AddConnectionForm({ onSuccess }: ConnectionFormProps) {
 							type="radio"
 							value="manual"
 							checked={connectionType === "manual"}
-							onChange={(e) =>
+							onChange={e =>
 								setConnectionType(
-									e.target.value as "connection_string" | "manual",
+									e.target.value as "connection_string" | "manual"
 								)
 							}
 						/>

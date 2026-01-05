@@ -19,12 +19,12 @@ interface TransposeViewProps {
 	getColumnWidth: (
 		dbName: string,
 		tableName: string,
-		colName: string,
+		colName: string
 	) => number | undefined;
 	getRowHeight: (
 		dbName: string,
 		tableName: string,
-		rowKey: string,
+		rowKey: string
 	) => number | undefined;
 	startColumnResize: (e: React.MouseEvent, colName: string) => void;
 	startRowResize: (e: React.MouseEvent, rowKey: string) => void;
@@ -67,7 +67,7 @@ export function TransposeView({
 		<div
 			className={cn(
 				"overflow-hidden rounded-lg border border-border",
-				fullWidth && "w-full",
+				fullWidth && "w-full"
 			)}
 		>
 			<div className="max-h-[70vh] overflow-auto">
@@ -78,7 +78,7 @@ export function TransposeView({
 							<th
 								className={cn(
 									"group sticky left-0 z-20 border-border border-r bg-muted/95 px-4 text-left font-semibold text-foreground",
-									densityStyles[densityMode].py,
+									densityStyles[densityMode].py
 								)}
 								style={{
 									width:
@@ -92,7 +92,7 @@ export function TransposeView({
 								</div>
 								<div
 									className="absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary"
-									onMouseDown={(e) => startColumnResize(e, "__transpose_field")}
+									onMouseDown={e => startColumnResize(e, "__transpose_field")}
 								/>
 							</th>
 
@@ -102,7 +102,7 @@ export function TransposeView({
 									getColumnWidth(
 										dbName,
 										tableName,
-										`__transpose_row_${colIndex}`,
+										`__transpose_row_${colIndex}`
 									) ?? 200;
 
 								return (
@@ -110,7 +110,7 @@ export function TransposeView({
 										key={getRowKey(row, colIndex)}
 										className={cn(
 											"group relative border-border border-r px-4 text-left font-semibold text-foreground last:border-r-0",
-											densityStyles[densityMode].py,
+											densityStyles[densityMode].py
 										)}
 										style={{
 											width,
@@ -121,7 +121,7 @@ export function TransposeView({
 										Row {colIndex + 1}
 										<div
 											className="absolute top-0 right-0 z-50 h-full w-1 cursor-col-resize bg-transparent hover:bg-primary"
-											onMouseDown={(e) =>
+											onMouseDown={e =>
 												startColumnResize(e, `__transpose_row_${colIndex}`)
 											}
 										/>
@@ -140,14 +140,14 @@ export function TransposeView({
 									key={`field-${col.name}`}
 									className={cn(
 										"group border-border border-b transition-colors hover:bg-muted/30",
-										zebraStriping && rowIdx % 2 === 1 && "bg-muted/20",
+										zebraStriping && rowIdx % 2 === 1 && "bg-muted/20"
 									)}
 								>
 									{/* Field name cell (sticky) */}
 									<td
 										className={cn(
 											"group/field sticky left-0 z-10 border-border border-r bg-muted/50 px-4 font-semibold text-foreground",
-											densityStyles[densityMode].py,
+											densityStyles[densityMode].py
 										)}
 										style={{ height }}
 									>
@@ -159,7 +159,7 @@ export function TransposeView({
 										</div>
 										<div
 											className="absolute bottom-0 left-0 z-50 h-1 w-full cursor-row-resize bg-transparent hover:bg-primary"
-											onMouseDown={(e) => startRowResize(e, rowKey)}
+											onMouseDown={e => startRowResize(e, rowKey)}
 										/>
 									</td>
 
@@ -172,19 +172,19 @@ export function TransposeView({
 											getColumnWidth(
 												dbName,
 												tableName,
-												`__transpose_row_${rowIndex}`,
+												`__transpose_row_${rowIndex}`
 											) ?? 200;
 
 										return (
 											<td
 												key={`transpose-${col.name}-${getRowKey(
 													row,
-													rowIndex,
+													rowIndex
 												)}`}
 												className={cn(
 													"border-border border-r px-4 last:border-r-0",
 													densityStyles[densityMode].py,
-													isNull && showNullDistinct && "bg-muted/20",
+													isNull && showNullDistinct && "bg-muted/20"
 												)}
 												style={{
 													width,

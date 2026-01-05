@@ -36,7 +36,7 @@ export function Muted({
 				"text-muted-foreground",
 				sizeClasses[size],
 				italic && "italic",
-				className,
+				className
 			)}
 			{...props}
 		>

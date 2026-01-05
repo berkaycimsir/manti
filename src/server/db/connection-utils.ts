@@ -1,13 +1,13 @@
-import { TRPCError } from '@trpc/server';
-import { and, eq } from 'drizzle-orm';
-import type { Kysely } from 'kysely';
-import type { db } from '~/server/db';
-import { connectionPool } from '~/server/db/connection-pool';
-import { databaseConnections } from '~/server/db/schema';
+import { TRPCError } from "@trpc/server";
+import { and, eq } from "drizzle-orm";
+import type { Kysely } from "kysely";
+import type { db } from "~/server/db";
+import { connectionPool } from "~/server/db/connection-pool";
+import { databaseConnections } from "~/server/db/schema";
 
 interface Context {
-  db: typeof db;
-  userId: string;
+	db: typeof db;
+	userId: string;
 }
 
 /**
@@ -19,43 +19,43 @@ interface Context {
  * @throws TRPCError if the connection is not found or fails to initialize
  */
 export async function getValidatedConnection(
-  ctx: Context,
-  connectionId: number,
-  options: { updateLastUsed?: boolean } = { updateLastUsed: true }
+	ctx: Context,
+	connectionId: number,
+	options: { updateLastUsed?: boolean } = { updateLastUsed: true }
 ): Promise<Kysely<any>> {
-  if (!ctx.userId) {
-    throw new TRPCError({
-      code: 'UNAUTHORIZED',
-      message: 'Not authenticated',
-    });
-  }
+	if (!ctx.userId) {
+		throw new TRPCError({
+			code: "UNAUTHORIZED",
+			message: "Not authenticated",
+		});
+	}
 
-  const connection = await ctx.db.query.databaseConnections.findFirst({
-    where: and(
-      eq(databaseConnections.id, connectionId),
-      eq(databaseConnections.userId, ctx.userId)
-    ),
-  });
+	const connection = await ctx.db.query.databaseConnections.findFirst({
+		where: and(
+			eq(databaseConnections.id, connectionId),
+			eq(databaseConnections.userId, ctx.userId)
+		),
+	});
 
-  if (!connection) {
-    throw new TRPCError({
-      code: 'NOT_FOUND',
-      message: 'Database connection not found',
-    });
-  }
+	if (!connection) {
+		throw new TRPCError({
+			code: "NOT_FOUND",
+			message: "Database connection not found",
+		});
+	}
 
-  try {
-    return await connectionPool.getConnection(connection, options);
-  } catch (error) {
-    console.error('Failed to get connection from pool:', error);
-    throw new TRPCError({
-      code: 'BAD_REQUEST',
-      message:
-        error instanceof Error
-          ? error.message
-          : 'Failed to connect to the database',
-    });
-  }
+	try {
+		return await connectionPool.getConnection(connection, options);
+	} catch (error) {
+		console.error("Failed to get connection from pool:", error);
+		throw new TRPCError({
+			code: "BAD_REQUEST",
+			message:
+				error instanceof Error
+					? error.message
+					: "Failed to connect to the database",
+		});
+	}
 }
 
 /**
@@ -64,44 +64,44 @@ export async function getValidatedConnection(
  * and key-value format (host=localhost port=5432 ...).
  */
 export function parseAllFromConnectionString(connectionString: string) {
-  const result: {
-    host: string | null;
-    port: number | null;
-    username: string | null;
-    database: string | null;
-  } = {
-    host: null,
-    port: null,
-    username: null,
-    database: null,
-  };
+	const result: {
+		host: string | null;
+		port: number | null;
+		username: string | null;
+		database: string | null;
+	} = {
+		host: null,
+		port: null,
+		username: null,
+		database: null,
+	};
 
-  try {
-    if (
-      connectionString.startsWith('postgresql://') ||
-      connectionString.startsWith('postgres://')
-    ) {
-      const url = new URL(connectionString);
-      result.host = url.hostname || null;
-      result.port = url.port ? Number.parseInt(url.port, 10) : null;
-      result.username = url.username || null;
-      result.database = url.pathname.replace(/^\//, '') || null;
-      return result;
-    }
+	try {
+		if (
+			connectionString.startsWith("postgresql://") ||
+			connectionString.startsWith("postgres://")
+		) {
+			const url = new URL(connectionString);
+			result.host = url.hostname || null;
+			result.port = url.port ? Number.parseInt(url.port, 10) : null;
+			result.username = url.username || null;
+			result.database = url.pathname.replace(/^\//, "") || null;
+			return result;
+		}
 
-    // Fallback for key-value format (libpq style)
-    const hostMatch = connectionString.match(/(?:^|\s)host=([^\s]+)/);
-    const portMatch = connectionString.match(/(?:^|\s)port=([^\s]+)/);
-    const userMatch = connectionString.match(/(?:^|\s)user=([^\s]+)/);
-    const dbMatch = connectionString.match(/(?:^|\s)dbname=([^\s]+)/);
+		// Fallback for key-value format (libpq style)
+		const hostMatch = connectionString.match(/(?:^|\s)host=([^\s]+)/);
+		const portMatch = connectionString.match(/(?:^|\s)port=([^\s]+)/);
+		const userMatch = connectionString.match(/(?:^|\s)user=([^\s]+)/);
+		const dbMatch = connectionString.match(/(?:^|\s)dbname=([^\s]+)/);
 
-    result.host = hostMatch?.[1] ?? null;
-    result.port = portMatch?.[1] ? Number.parseInt(portMatch[1], 10) : null;
-    result.username = userMatch?.[1] ?? null;
-    result.database = dbMatch?.[1] ?? null;
+		result.host = hostMatch?.[1] ?? null;
+		result.port = portMatch?.[1] ? Number.parseInt(portMatch[1], 10) : null;
+		result.username = userMatch?.[1] ?? null;
+		result.database = dbMatch?.[1] ?? null;
 
-    return result;
-  } catch (_e) {
-    return result;
-  }
+		return result;
+	} catch (_e) {
+		return result;
+	}
 }
