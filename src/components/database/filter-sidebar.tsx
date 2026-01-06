@@ -1,20 +1,8 @@
 "use client";
 
-import {
-	ArrowDownNarrowWide,
-	ArrowUpNarrowWide,
-	CaseSensitive,
-	CircleDot,
-	CircleOff,
-	Equal,
-	EqualNot,
-	Filter,
-	List,
-	Plus,
-	Trash2,
-	X,
-} from "lucide-react";
+import { Filter, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import {
@@ -27,6 +15,17 @@ import { Input } from "~/components/ui/input";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
+import { LucideIcon } from "~/components/database/shared/lucide-icon";
+import { ToggleSwitch } from "~/components/database/shared/toggle-switch";
+import {
+	filterNeedsSecondValue,
+	filterNeedsValue,
+	getFilterIconName,
+	getFilterLabel,
+	FILTER_OPTIONS,
+} from "~/lib/constants/filter-options";
+import type { FilterType, FilterConfig } from "~/types/filters";
+
 interface Column {
 	name: string;
 	type: string;
@@ -38,133 +37,6 @@ interface FilterSidebarProps {
 	connectionId: number;
 	tableName: string;
 	columns: Column[];
-}
-
-type FilterType =
-	| "contains"
-	| "equals"
-	| "not_equals"
-	| "starts_with"
-	| "ends_with"
-	| "greater_than"
-	| "less_than"
-	| "between"
-	| "is_null"
-	| "is_not_null"
-	| "in_list";
-
-interface FilterOption {
-	type: FilterType;
-	label: string;
-	icon: React.ReactNode;
-	description: string;
-	needsValue: boolean;
-	needsSecondValue: boolean;
-}
-
-const FILTER_OPTIONS: FilterOption[] = [
-	{
-		type: "contains",
-		label: "Contains",
-		icon: <CaseSensitive className="h-4 w-4" />,
-		description: "Text contains value",
-		needsValue: true,
-		needsSecondValue: false,
-	},
-	{
-		type: "equals",
-		label: "Equals",
-		icon: <Equal className="h-4 w-4" />,
-		description: "Exact match",
-		needsValue: true,
-		needsSecondValue: false,
-	},
-	{
-		type: "not_equals",
-		label: "Not Equals",
-		icon: <EqualNot className="h-4 w-4" />,
-		description: "Does not match",
-		needsValue: true,
-		needsSecondValue: false,
-	},
-	{
-		type: "starts_with",
-		label: "Starts With",
-		icon: <ArrowDownNarrowWide className="h-4 w-4" />,
-		description: "Text starts with value",
-		needsValue: true,
-		needsSecondValue: false,
-	},
-	{
-		type: "ends_with",
-		label: "Ends With",
-		icon: <ArrowUpNarrowWide className="h-4 w-4" />,
-		description: "Text ends with value",
-		needsValue: true,
-		needsSecondValue: false,
-	},
-	{
-		type: "greater_than",
-		label: "Greater Than",
-		icon: <ArrowUpNarrowWide className="h-4 w-4" />,
-		description: "Value is greater than",
-		needsValue: true,
-		needsSecondValue: false,
-	},
-	{
-		type: "less_than",
-		label: "Less Than",
-		icon: <ArrowDownNarrowWide className="h-4 w-4" />,
-		description: "Value is less than",
-		needsValue: true,
-		needsSecondValue: false,
-	},
-	{
-		type: "between",
-		label: "Between",
-		icon: <ArrowDownNarrowWide className="h-4 w-4" />,
-		description: "Value is between two values",
-		needsValue: true,
-		needsSecondValue: true,
-	},
-	{
-		type: "is_null",
-		label: "Is Null",
-		icon: <CircleOff className="h-4 w-4" />,
-		description: "Value is null/empty",
-		needsValue: false,
-		needsSecondValue: false,
-	},
-	{
-		type: "is_not_null",
-		label: "Is Not Null",
-		icon: <CircleDot className="h-4 w-4" />,
-		description: "Value is not null",
-		needsValue: false,
-		needsSecondValue: false,
-	},
-	{
-		type: "in_list",
-		label: "In List",
-		icon: <List className="h-4 w-4" />,
-		description: "Value is in comma-separated list",
-		needsValue: true,
-		needsSecondValue: false,
-	},
-];
-
-function getFilterOption(type: FilterType): FilterOption | undefined {
-	return FILTER_OPTIONS.find(opt => opt.type === type);
-}
-
-function getFilterIcon(type: string) {
-	const option = FILTER_OPTIONS.find(opt => opt.type === type);
-	return option?.icon ?? <Filter className="h-4 w-4" />;
-}
-
-function getFilterLabel(type: string) {
-	const option = FILTER_OPTIONS.find(opt => opt.type === type);
-	return option?.label ?? type;
 }
 
 export function FilterSidebar({
@@ -182,12 +54,24 @@ export function FilterSidebar({
 
 	const utils = api.useUtils();
 
-	// Fetch existing filters
-	const { data: filters = [], isLoading } =
+	// Fetch existing filters for this table (includes both table-specific AND global)
+	const { data: allFilters = [], isLoading } =
 		api.database.listColumnFilters.useQuery({
 			connectionId,
 			tableName,
 		});
+
+	// Fetch global filters
+	const { data: globalFilters = [], isLoading: loadingGlobal } =
+		api.database.listGlobalFilters.useQuery({ connectionId });
+
+	// Filter to only table-specific filters (exclude global ones)
+	const filters = allFilters.filter(f => f.tableName !== null);
+
+	// Compute which global filters are overridden by ENABLED table-specific ones
+	const getGlobalOverrideStatus = (columnName: string) => {
+		return filters.some(f => f.columnName === columnName && f.isEnabled);
+	};
 
 	// Create filter mutation
 	const createFilter = api.database.createColumnFilter.useMutation({
@@ -208,6 +92,8 @@ export function FilterSidebar({
 	const deleteFilter = api.database.deleteColumnFilter.useMutation({
 		onSuccess: () => {
 			utils.database.listColumnFilters.invalidate({ connectionId, tableName });
+			// Also invalidate global filters in case a global one was deleted
+			utils.database.listGlobalFilters.invalidate({ connectionId });
 		},
 	});
 
@@ -221,20 +107,20 @@ export function FilterSidebar({
 	const handleCreateFilter = () => {
 		if (!selectedColumn || !selectedFilterType) return;
 
-		const filterOption = getFilterOption(selectedFilterType);
-		if (!filterOption) return;
-
 		// Validate required values
-		if (filterOption.needsValue && !filterValue.trim()) return;
-		if (filterOption.needsSecondValue && !filterValueEnd.trim()) return;
+		if (filterNeedsValue(selectedFilterType) && !filterValue.trim()) return;
+		if (filterNeedsSecondValue(selectedFilterType) && !filterValueEnd.trim())
+			return;
 
 		createFilter.mutate({
 			connectionId,
 			tableName,
 			columnName: selectedColumn,
 			filterType: selectedFilterType,
-			filterValue: filterOption.needsValue ? filterValue : null,
-			filterValueEnd: filterOption.needsSecondValue ? filterValueEnd : null,
+			filterValue: filterNeedsValue(selectedFilterType) ? filterValue : null,
+			filterValueEnd: filterNeedsSecondValue(selectedFilterType)
+				? filterValueEnd
+				: null,
 			isEnabled: true,
 		});
 	};
@@ -286,13 +172,86 @@ export function FilterSidebar({
 
 				{/* Content */}
 				<div className="flex-1 overflow-y-auto p-4">
-					{isLoading ? (
+					{isLoading || loadingGlobal ? (
 						<div className="flex items-center justify-center py-8">
 							<div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
 						</div>
 					) : (
 						<div className="space-y-4">
-							{/* Existing filters */}
+							{/* Global filters */}
+							{globalFilters.length > 0 && (
+								<div className="space-y-3">
+									<h3 className="flex items-center gap-2 font-medium text-foreground text-sm">
+										Global Filters
+										<Badge variant="secondary" className="text-xs">
+											Connection-wide
+										</Badge>
+									</h3>
+									{globalFilters.map(globalF => {
+										const isOverridden = getGlobalOverrideStatus(
+											globalF.columnName
+										);
+										return (
+											<Card
+												key={`global-${globalF.id}`}
+												className={cn(
+													"border-dashed p-3",
+													isOverridden && "bg-muted/30 opacity-50"
+												)}
+											>
+												<div className="flex items-start justify-between">
+													<div className="flex items-center gap-2">
+														<LucideIcon
+															name={getFilterIconName(globalF.filterType)}
+															className="h-4 w-4"
+															fallback={<Filter className="h-4 w-4" />}
+														/>
+														<div>
+															<p
+																className={cn(
+																	"font-medium text-sm",
+																	isOverridden && "line-through"
+																)}
+															>
+																{globalF.columnName}
+															</p>
+															<p className="text-muted-foreground text-xs">
+																{getFilterLabel(globalF.filterType)}
+																{globalF.filterValue && (
+																	<span className="ml-1 font-mono">
+																		: "{globalF.filterValue}"
+																	</span>
+																)}
+															</p>
+														</div>
+													</div>
+													<div className="flex items-center gap-1">
+														{isOverridden && (
+															<Badge
+																variant="outline"
+																className="border-orange-300 text-orange-600 text-xs"
+															>
+																Overridden
+															</Badge>
+														)}
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-7 w-7 text-destructive hover:text-destructive"
+															onClick={() => handleDelete(globalF.id)}
+															title="Delete global filter"
+														>
+															<Trash2 className="h-4 w-4" />
+														</Button>
+													</div>
+												</div>
+											</Card>
+										);
+									})}
+								</div>
+							)}
+
+							{/* Table-specific filters */}
 							{filters.length > 0 && (
 								<div className="space-y-3">
 									<h3 className="font-medium text-foreground text-sm">
@@ -305,7 +264,11 @@ export function FilterSidebar({
 										>
 											<div className="flex items-start justify-between">
 												<div className="flex items-center gap-2">
-													{getFilterIcon(filter.filterType)}
+													<LucideIcon
+														name={getFilterIconName(filter.filterType)}
+														className="h-4 w-4"
+														fallback={<Filter className="h-4 w-4" />}
+													/>
 													<div>
 														<p className="font-medium text-foreground text-sm">
 															{filter.columnName}
@@ -326,28 +289,15 @@ export function FilterSidebar({
 													</div>
 												</div>
 												<div className="flex items-center gap-1">
-													<button
-														type="button"
-														className={cn(
-															"relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-															filter.isEnabled ? "bg-primary" : "bg-muted"
-														)}
-														onClick={() =>
+													<ToggleSwitch
+														enabled={filter.isEnabled ?? true}
+														onChange={() =>
 															handleToggleEnabled(
 																filter.id,
 																filter.isEnabled ?? true
 															)
 														}
-													>
-														<span
-															className={cn(
-																"inline-block h-4 w-4 rounded-full bg-background shadow-sm transition-transform",
-																filter.isEnabled
-																	? "translate-x-6"
-																	: "translate-x-1"
-															)}
-														/>
-													</button>
+													/>
 													<Button
 														variant="ghost"
 														size="icon"
@@ -393,7 +343,11 @@ export function FilterSidebar({
 										{selectedFilterType ? (
 											<div className="space-y-3">
 												<div className="flex items-center gap-2 rounded-md bg-muted/50 p-2">
-													{getFilterIcon(selectedFilterType)}
+													<LucideIcon
+														name={getFilterIconName(selectedFilterType)}
+														className="h-4 w-4"
+														fallback={<Filter className="h-4 w-4" />}
+													/>
 													<span className="text-sm">
 														{getFilterLabel(selectedFilterType)}
 													</span>
@@ -412,7 +366,7 @@ export function FilterSidebar({
 												</div>
 
 												{/* Filter value inputs */}
-												{getFilterOption(selectedFilterType)?.needsValue && (
+												{filterNeedsValue(selectedFilterType) && (
 													<Input
 														placeholder={
 															selectedFilterType === "in_list"
@@ -424,8 +378,7 @@ export function FilterSidebar({
 													/>
 												)}
 
-												{getFilterOption(selectedFilterType)
-													?.needsSecondValue && (
+												{filterNeedsSecondValue(selectedFilterType) && (
 													<Input
 														placeholder="Enter end value..."
 														value={filterValueEnd}
@@ -458,7 +411,10 @@ export function FilterSidebar({
 														onClick={() => setSelectedFilterType(option.type)}
 													>
 														<div className="flex items-center gap-2">
-															{option.icon}
+															<LucideIcon
+																name={option.icon}
+																className="h-4 w-4"
+															/>
 															<span className="font-medium text-sm">
 																{option.label}
 															</span>
@@ -561,15 +517,8 @@ export function FilterSidebar({
 	);
 }
 
-// Export filter configuration type for use in table viewer
-export interface FilterConfig {
-	id: number;
-	columnName: string;
-	filterType: FilterType;
-	filterValue: string | null;
-	filterValueEnd: string | null;
-	isEnabled: boolean | null;
-}
+// Re-export FilterConfig from centralized types for backward compatibility
+export type { FilterConfig } from "~/types/filters";
 
 // Apply filter to a value
 export function applyFilter(value: unknown, filter: FilterConfig): boolean {

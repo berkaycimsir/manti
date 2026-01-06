@@ -134,4 +134,57 @@ export const tableRouter = createTRPCRouter({
 				});
 			}
 		}),
+
+	/**
+	 * Get common column names across all tables in a database.
+	 * Returns column names that appear in 2+ tables (for global transformations/filters).
+	 */
+	getCommonColumns: protectedProcedure
+		.input(z.object({ connectionId: z.number() }))
+		.query(async ({ ctx, input }) => {
+			try {
+				const db = await getValidatedConnection(ctx, input.connectionId);
+				const tables = await getTables(db);
+
+				// Get all columns from all tables
+				const columnCounts = new Map<
+					string,
+					{ count: number; types: Set<string> }
+				>();
+
+				for (const table of tables) {
+					const columns = await getTableColumns(db, table.name, table.schema);
+					for (const col of columns) {
+						const existing = columnCounts.get(col.name);
+						if (existing) {
+							existing.count++;
+							existing.types.add(col.type);
+						} else {
+							columnCounts.set(col.name, {
+								count: 1,
+								types: new Set([col.type]),
+							});
+						}
+					}
+				}
+
+				// Return columns sorted by frequency (most common first)
+				const result = Array.from(columnCounts.entries())
+					.map(([name, { count, types }]) => ({
+						name,
+						tableCount: count,
+						types: Array.from(types),
+					}))
+					.sort((a, b) => b.tableCount - a.tableCount);
+
+				return result;
+			} catch (error) {
+				if (error instanceof TRPCError) throw error;
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message:
+						error instanceof Error ? error.message : "Failed to fetch columns",
+				});
+			}
+		}),
 });

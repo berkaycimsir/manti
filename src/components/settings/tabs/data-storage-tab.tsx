@@ -13,13 +13,6 @@ import {
 import { useEffect, useState } from "react";
 import { OverrideIndicator, ToggleOption } from "~/components/settings/shared";
 import { Button } from "~/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import {
@@ -29,6 +22,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/select";
+import { Separator } from "~/components/ui/separator";
 import {
 	Table,
 	TableBody,
@@ -123,19 +117,20 @@ export function DataStorageTab({ onOpenExplorer }: DataStorageTabProps) {
 	const resolveLabel = (key: string) => resolveOverrideLabel(key, connections);
 
 	return (
-		<div className="space-y-6">
-			{/* Global Preferences Card */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
+		<div className="space-y-8">
+			{/* Global Preferences */}
+			<div className="space-y-4">
+				<div>
+					<div className="flex items-center gap-2">
 						<Settings2 className="h-5 w-5" />
-						Global Preferences
-					</CardTitle>
-					<CardDescription>
+						<h3 className="font-medium text-lg">Global Preferences</h3>
+					</div>
+					<p className="text-muted-foreground text-sm">
 						Set default behaviors and view settings for the entire application.
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-6">
+					</p>
+				</div>
+				<Separator />
+				<div className="space-y-6">
 					{/* View Settings Grid */}
 					<div className="grid gap-4 sm:grid-cols-2">
 						<div className="space-y-2">
@@ -301,30 +296,31 @@ export function DataStorageTab({ onOpenExplorer }: DataStorageTabProps) {
 							</div>
 						</div>
 					</div>
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 
-			{/* Cloud Data Card */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<Database className="h-5 w-5" />
-						Cloud Data (Server-Side)
-					</CardTitle>
-					<div className="flex items-center justify-between">
-						<CardDescription>
+			{/* Cloud Data */}
+			<div className="space-y-4">
+				<div className="flex items-center justify-between">
+					<div>
+						<div className="flex items-center gap-2">
+							<Database className="h-5 w-5" />
+							<h3 className="font-medium text-lg">Cloud Data (Server-Side)</h3>
+						</div>
+						<p className="text-muted-foreground text-sm">
 							Manage your data stored on our servers.
-						</CardDescription>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => onOpenExplorer("server")}
-						>
-							Manage Details
-						</Button>
+						</p>
 					</div>
-				</CardHeader>
-				<CardContent>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onOpenExplorer("server")}
+					>
+						Manage Details
+					</Button>
+				</div>
+				<Separator />
+				<div>
 					{isLoadingData ? (
 						<div className="flex justify-center p-8">
 							<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -388,30 +384,31 @@ export function DataStorageTab({ onOpenExplorer }: DataStorageTabProps) {
 							))}
 						</div>
 					)}
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 
-			{/* Local Storage Card */}
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2">
-						<HardDrive className="h-5 w-5" />
-						Local Storage (Browser)
-					</CardTitle>
-					<div className="flex items-center justify-between">
-						<CardDescription>
+			{/* Local Storage */}
+			<div className="space-y-4">
+				<div className="flex items-center justify-between">
+					<div>
+						<div className="flex items-center gap-2">
+							<HardDrive className="h-5 w-5" />
+							<h3 className="font-medium text-lg">Local Storage (Browser)</h3>
+						</div>
+						<p className="text-muted-foreground text-sm">
 							Manage data stored locally in your browser.
-						</CardDescription>
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => onOpenExplorer("local")}
-						>
-							Manage Details
-						</Button>
+						</p>
 					</div>
-				</CardHeader>
-				<CardContent>
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => onOpenExplorer("local")}
+					>
+						Manage Details
+					</Button>
+				</div>
+				<Separator />
+				<div className="rounded-md border">
 					<Table>
 						<TableHeader>
 							<TableRow>
@@ -452,8 +449,8 @@ export function DataStorageTab({ onOpenExplorer }: DataStorageTabProps) {
 							))}
 						</TableBody>
 					</Table>
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 		</div>
 	);
 }

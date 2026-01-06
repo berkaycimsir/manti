@@ -1,21 +1,8 @@
 "use client";
 
-import {
-	ArrowDown,
-	ArrowUp,
-	Braces,
-	Calendar,
-	CaseSensitive,
-	CheckCircle2,
-	Eye,
-	Hash,
-	Plus,
-	Scissors,
-	Settings2,
-	Trash2,
-	X,
-} from "lucide-react";
+import { Plus, Settings2, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import {
@@ -24,9 +11,20 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Input } from "~/components/ui/input";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
+
+import { LucideIcon } from "~/components/database/shared/lucide-icon";
+import { ToggleSwitch } from "~/components/database/shared/toggle-switch";
+import { TransformationOptionsEditor } from "~/components/database/shared/transformation-options-editor";
+import { formatOptions } from "~/lib/column-config-utils";
+import {
+	getDefaultTransformationOptions,
+	getTransformationIconName,
+	getTransformationLabel,
+	TRANSFORMATION_OPTIONS,
+} from "~/lib/constants/transformation-options";
+import type { TransformationType } from "~/types/transformations";
 
 interface Column {
 	name: string;
@@ -40,107 +38,6 @@ interface TransformationSidebarProps {
 	tableName: string;
 	columns: Column[];
 }
-
-type TransformationType =
-	| "date"
-	| "number"
-	| "boolean"
-	| "json"
-	| "truncate"
-	| "mask"
-	| "uppercase"
-	| "lowercase"
-	| "capitalize"
-	| "custom";
-
-interface TransformationOption {
-	type: TransformationType;
-	label: string;
-	icon: React.ReactNode;
-	description: string;
-	defaultOptions: Record<string, unknown>;
-}
-
-const TRANSFORMATION_OPTIONS: TransformationOption[] = [
-	{
-		type: "date",
-		label: "Date Format",
-		icon: <Calendar className="h-4 w-4" />,
-		description: "Format date/timestamp values",
-		defaultOptions: { format: "YYYY-MM-DD HH:mm:ss", timezone: "local" },
-	},
-	{
-		type: "number",
-		label: "Number Format",
-		icon: <Hash className="h-4 w-4" />,
-		description: "Format numeric values",
-		defaultOptions: {
-			decimals: 2,
-			thousandsSeparator: ",",
-			prefix: "",
-			suffix: "",
-		},
-	},
-	{
-		type: "boolean",
-		label: "Boolean Display",
-		icon: <CheckCircle2 className="h-4 w-4" />,
-		description: "Customize true/false display",
-		defaultOptions: { trueLabel: "✓ Yes", falseLabel: "✗ No" },
-	},
-	{
-		type: "json",
-		label: "JSON Pretty Print",
-		icon: <Braces className="h-4 w-4" />,
-		description: "Format JSON with indentation",
-		defaultOptions: { indent: 2 },
-	},
-	{
-		type: "truncate",
-		label: "Truncate Text",
-		icon: <Scissors className="h-4 w-4" />,
-		description: "Limit text length",
-		defaultOptions: { maxLength: 50, suffix: "..." },
-	},
-	{
-		type: "mask",
-		label: "Mask Data",
-		icon: <Eye className="h-4 w-4" />,
-		description: "Hide sensitive data",
-		defaultOptions: { maskChar: "*", showFirst: 0, showLast: 4 },
-	},
-	{
-		type: "uppercase",
-		label: "Uppercase",
-		icon: <ArrowUp className="h-4 w-4" />,
-		description: "Convert to uppercase",
-		defaultOptions: {},
-	},
-	{
-		type: "lowercase",
-		label: "Lowercase",
-		icon: <ArrowDown className="h-4 w-4" />,
-		description: "Convert to lowercase",
-		defaultOptions: {},
-	},
-	{
-		type: "capitalize",
-		label: "Capitalize",
-		icon: <CaseSensitive className="h-4 w-4" />,
-		description: "Capitalize first letter",
-		defaultOptions: {},
-	},
-];
-
-const DATE_FORMATS = [
-	{ label: "YYYY-MM-DD HH:mm:ss", value: "YYYY-MM-DD HH:mm:ss" },
-	{ label: "YYYY-MM-DD", value: "YYYY-MM-DD" },
-	{ label: "MM/DD/YYYY", value: "MM/DD/YYYY" },
-	{ label: "DD/MM/YYYY", value: "DD/MM/YYYY" },
-	{ label: "MMM DD, YYYY", value: "MMM DD, YYYY" },
-	{ label: "Relative (2 hours ago)", value: "relative" },
-	{ label: "ISO 8601", value: "ISO" },
-];
 
 export function TransformationSidebar({
 	isOpen,
@@ -156,12 +53,29 @@ export function TransformationSidebar({
 
 	const utils = api.useUtils();
 
-	// Fetch existing transformations
-	const { data: transformations = [], isLoading } =
+	// Fetch existing transformations for this table (includes both table-specific AND global)
+	const { data: allTransformations = [], isLoading } =
 		api.database.listColumnTransformations.useQuery(
 			{ connectionId, tableName },
 			{ enabled: isOpen }
 		);
+
+	// Fetch global transformations separately for display purposes
+	const { data: globalTransformations = [], isLoading: loadingGlobal } =
+		api.database.listGlobalTransformations.useQuery(
+			{ connectionId },
+			{ enabled: isOpen }
+		);
+
+	// Filter to only table-specific transformations (exclude global ones)
+	const transformations = allTransformations.filter(t => t.tableName !== null);
+
+	// Compute which global transformations are overridden by ENABLED table-specific ones
+	const getGlobalOverrideStatus = (columnName: string) => {
+		return transformations.some(
+			t => t.columnName === columnName && t.isEnabled
+		);
+	};
 
 	// Create transformation mutation
 	const createMutation = api.database.createColumnTransformation.useMutation({
@@ -192,6 +106,10 @@ export function TransformationSidebar({
 				connectionId,
 				tableName,
 			});
+			// Also invalidate global transformations in case a global one was deleted
+			void utils.database.listGlobalTransformations.invalidate({
+				connectionId,
+			});
 		},
 	});
 
@@ -199,13 +117,12 @@ export function TransformationSidebar({
 		columnName: string,
 		type: TransformationType
 	) => {
-		const option = TRANSFORMATION_OPTIONS.find(o => o.type === type);
 		createMutation.mutate({
 			connectionId,
 			tableName,
 			columnName,
 			transformationType: type,
-			options: option?.defaultOptions ?? {},
+			options: getDefaultTransformationOptions(type),
 			isEnabled: true,
 		});
 	};
@@ -229,16 +146,6 @@ export function TransformationSidebar({
 
 	const handleDelete = (id: number) => {
 		deleteMutation.mutate({ id });
-	};
-
-	const getTransformationIcon = (type: string) => {
-		const option = TRANSFORMATION_OPTIONS.find(o => o.type === type);
-		return option?.icon ?? <Settings2 className="h-4 w-4" />;
-	};
-
-	const getTransformationLabel = (type: string) => {
-		const option = TRANSFORMATION_OPTIONS.find(o => o.type === type);
-		return option?.label ?? type;
 	};
 
 	// Get columns without transformations
@@ -275,13 +182,90 @@ export function TransformationSidebar({
 
 				{/* Content */}
 				<div className="flex-1 overflow-y-auto p-4">
-					{isLoading ? (
+					{isLoading || loadingGlobal ? (
 						<div className="flex items-center justify-center py-8">
 							<div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-primary" />
 						</div>
 					) : (
 						<div className="space-y-4">
-							{/* Existing transformations */}
+							{/* Global transformations */}
+							{globalTransformations.length > 0 && (
+								<div className="space-y-3">
+									<h3 className="flex items-center gap-2 font-medium text-foreground text-sm">
+										Global Transformations
+										<Badge variant="secondary" className="text-xs">
+											Connection-wide
+										</Badge>
+									</h3>
+									{globalTransformations.map(globalT => {
+										const isOverridden = getGlobalOverrideStatus(
+											globalT.columnName
+										);
+										return (
+											<Card
+												key={`global-${globalT.id}`}
+												className={cn(
+													"border-dashed p-3",
+													isOverridden && "bg-muted/30 opacity-50"
+												)}
+											>
+												<div className="flex items-start justify-between">
+													<div className="flex items-center gap-2">
+														<LucideIcon
+															name={getTransformationIconName(
+																globalT.transformationType
+															)}
+															className="h-4 w-4"
+															fallback={<Settings2 className="h-4 w-4" />}
+														/>
+														<div>
+															<p
+																className={cn(
+																	"font-medium text-sm",
+																	isOverridden && "line-through"
+																)}
+															>
+																{globalT.columnName}
+															</p>
+															<p className="text-muted-foreground text-xs">
+																{getTransformationLabel(
+																	globalT.transformationType
+																)}
+																{formatOptions(globalT.options) && (
+																	<span className="ml-1">
+																		({formatOptions(globalT.options)})
+																	</span>
+																)}
+															</p>
+														</div>
+													</div>
+													<div className="flex items-center gap-1">
+														{isOverridden && (
+															<Badge
+																variant="outline"
+																className="border-orange-300 text-orange-600 text-xs"
+															>
+																Overridden
+															</Badge>
+														)}
+														<Button
+															variant="ghost"
+															size="icon"
+															className="h-7 w-7 text-destructive hover:text-destructive"
+															onClick={() => handleDelete(globalT.id)}
+															title="Delete global transformation"
+														>
+															<Trash2 className="h-4 w-4" />
+														</Button>
+													</div>
+												</div>
+											</Card>
+										);
+									})}
+								</div>
+							)}
+
+							{/* Existing table-specific transformations */}
 							{transformations.length > 0 && (
 								<div className="space-y-3">
 									<h3 className="font-medium text-foreground text-sm">
@@ -297,9 +281,13 @@ export function TransformationSidebar({
 										>
 											<div className="flex items-start justify-between">
 												<div className="flex items-center gap-2">
-													{getTransformationIcon(
-														transformation.transformationType
-													)}
+													<LucideIcon
+														name={getTransformationIconName(
+															transformation.transformationType
+														)}
+														className="h-4 w-4"
+														fallback={<Settings2 className="h-4 w-4" />}
+													/>
 													<div>
 														<p className="font-medium text-foreground text-sm">
 															{transformation.columnName}
@@ -312,30 +300,15 @@ export function TransformationSidebar({
 													</div>
 												</div>
 												<div className="flex items-center gap-1">
-													<button
-														type="button"
-														className={cn(
-															"relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors",
-															transformation.isEnabled
-																? "bg-primary"
-																: "bg-muted"
-														)}
-														onClick={() =>
+													<ToggleSwitch
+														enabled={transformation.isEnabled ?? true}
+														onChange={() =>
 															handleToggleEnabled(
 																transformation.id,
 																transformation.isEnabled ?? true
 															)
 														}
-													>
-														<span
-															className={cn(
-																"inline-block h-4 w-4 rounded-full bg-background shadow-sm transition-transform",
-																transformation.isEnabled
-																	? "translate-x-6"
-																	: "translate-x-1"
-															)}
-														/>
-													</button>
+													/>
 													<Button
 														variant="ghost"
 														size="icon"
@@ -349,7 +322,7 @@ export function TransformationSidebar({
 
 											{/* Options editor */}
 											{editingTransformation === transformation.id ? (
-												<TransformationOptionsEditor
+												<TransformationOptionsEditorWithSave
 													type={
 														transformation.transformationType as TransformationType
 													}
@@ -422,7 +395,10 @@ export function TransformationSidebar({
 															}
 														>
 															<div className="flex items-center gap-2">
-																{option.icon}
+																<LucideIcon
+																	name={option.icon}
+																	className="h-4 w-4"
+																/>
 																<span className="text-xs">{option.label}</span>
 															</div>
 														</Button>
@@ -465,8 +441,8 @@ export function TransformationSidebar({
 	);
 }
 
-// Options editor component for each transformation type
-function TransformationOptionsEditor({
+// Wrapper component with Save/Cancel buttons that uses the shared editor
+function TransformationOptionsEditorWithSave({
 	type,
 	options,
 	onSave,
@@ -480,175 +456,14 @@ function TransformationOptionsEditor({
 	const [localOptions, setLocalOptions] =
 		useState<Record<string, unknown>>(options);
 
-	const updateOption = (key: string, value: unknown) => {
-		setLocalOptions(prev => ({ ...prev, [key]: value }));
-	};
-
-	const renderOptions = () => {
-		switch (type) {
-			case "date":
-				return (
-					<div className="space-y-2">
-						<span className="text-muted-foreground text-xs">Format</span>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="outline" size="sm" className="w-full">
-									{(localOptions.format as string) || "Select format"}
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent>
-								{DATE_FORMATS.map(format => (
-									<DropdownMenuItem
-										key={format.value}
-										onClick={() => updateOption("format", format.value)}
-									>
-										{format.label}
-									</DropdownMenuItem>
-								))}
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</div>
-				);
-
-			case "number":
-				return (
-					<div className="space-y-2">
-						<div>
-							<span className="text-muted-foreground text-xs">Decimals</span>
-							<Input
-								type="number"
-								value={(localOptions.decimals as number) ?? 2}
-								onChange={e =>
-									updateOption("decimals", Number.parseInt(e.target.value, 10))
-								}
-								className="mt-1 h-8"
-							/>
-						</div>
-						<div>
-							<span className="text-muted-foreground text-xs">Prefix</span>
-							<Input
-								value={(localOptions.prefix as string) ?? ""}
-								onChange={e => updateOption("prefix", e.target.value)}
-								placeholder="e.g. $"
-								className="mt-1 h-8"
-							/>
-						</div>
-						<div>
-							<span className="text-muted-foreground text-xs">Suffix</span>
-							<Input
-								value={(localOptions.suffix as string) ?? ""}
-								onChange={e => updateOption("suffix", e.target.value)}
-								placeholder="e.g. %"
-								className="mt-1 h-8"
-							/>
-						</div>
-					</div>
-				);
-
-			case "boolean":
-				return (
-					<div className="space-y-2">
-						<div>
-							<span className="text-muted-foreground text-xs">True Label</span>
-							<Input
-								value={(localOptions.trueLabel as string) ?? "✓ Yes"}
-								onChange={e => updateOption("trueLabel", e.target.value)}
-								className="mt-1 h-8"
-							/>
-						</div>
-						<div>
-							<span className="text-muted-foreground text-xs">False Label</span>
-							<Input
-								value={(localOptions.falseLabel as string) ?? "✗ No"}
-								onChange={e => updateOption("falseLabel", e.target.value)}
-								className="mt-1 h-8"
-							/>
-						</div>
-					</div>
-				);
-
-			case "truncate":
-				return (
-					<div className="space-y-2">
-						<div>
-							<span className="text-muted-foreground text-xs">Max Length</span>
-							<Input
-								type="number"
-								value={(localOptions.maxLength as number) ?? 50}
-								onChange={e =>
-									updateOption("maxLength", Number.parseInt(e.target.value, 10))
-								}
-								className="mt-1 h-8"
-							/>
-						</div>
-						<div>
-							<span className="text-muted-foreground text-xs">Suffix</span>
-							<Input
-								value={(localOptions.suffix as string) ?? "..."}
-								onChange={e => updateOption("suffix", e.target.value)}
-								className="mt-1 h-8"
-							/>
-						</div>
-					</div>
-				);
-
-			case "mask":
-				return (
-					<div className="space-y-2">
-						<div>
-							<span className="text-muted-foreground text-xs">
-								Mask Character
-							</span>
-							<Input
-								value={(localOptions.maskChar as string) ?? "*"}
-								onChange={e => updateOption("maskChar", e.target.value)}
-								maxLength={1}
-								className="mt-1 h-8"
-							/>
-						</div>
-						<div>
-							<span className="text-muted-foreground text-xs">
-								Show Last N Characters
-							</span>
-							<Input
-								type="number"
-								value={(localOptions.showLast as number) ?? 4}
-								onChange={e =>
-									updateOption("showLast", Number.parseInt(e.target.value, 10))
-								}
-								className="mt-1 h-8"
-							/>
-						</div>
-					</div>
-				);
-
-			case "json":
-				return (
-					<div>
-						<span className="text-muted-foreground text-xs">Indent</span>
-						<Input
-							type="number"
-							value={(localOptions.indent as number) ?? 2}
-							onChange={e =>
-								updateOption("indent", Number.parseInt(e.target.value, 10))
-							}
-							className="mt-1 h-8"
-						/>
-					</div>
-				);
-
-			default:
-				return (
-					<p className="text-muted-foreground text-xs">
-						No additional options for this transformation
-					</p>
-				);
-		}
-	};
-
 	return (
 		<div className="mt-3 space-y-3 border-border border-t pt-3">
-			{renderOptions()}
+			<TransformationOptionsEditor
+				type={type}
+				options={localOptions}
+				onChange={setLocalOptions}
+				compact
+			/>
 			<div className="flex gap-2">
 				<Button
 					size="sm"

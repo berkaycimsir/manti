@@ -1,11 +1,172 @@
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { columnFilters, columnTransformations } from "~/server/db/schema";
 
 export const tableConfigRouter = createTRPCRouter({
+	// ==================== GLOBAL TRANSFORMATIONS ====================
+
+	/**
+	 * List all global column transformations for a connection (tableName IS NULL)
+	 */
+	listGlobalTransformations: protectedProcedure
+		.input(z.object({ connectionId: z.number() }))
+		.query(async ({ ctx, input }) => {
+			const transformations = await ctx.db
+				.select()
+				.from(columnTransformations)
+				.where(
+					and(
+						eq(columnTransformations.userId, ctx.userId),
+						eq(columnTransformations.connectionId, input.connectionId),
+						isNull(columnTransformations.tableName)
+					)
+				);
+
+			return transformations;
+		}),
+
+	/**
+	 * Create a global column transformation (tableName = null)
+	 */
+	createGlobalTransformation: protectedProcedure
+		.input(
+			z.object({
+				connectionId: z.number(),
+				columnName: z.string(),
+				transformationType: z.enum([
+					"date",
+					"number",
+					"boolean",
+					"json",
+					"truncate",
+					"mask",
+					"uppercase",
+					"lowercase",
+					"capitalize",
+					"custom",
+				]),
+				options: z.record(z.unknown()).optional(),
+				isEnabled: z.boolean().default(true),
+			})
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Check if global transformation already exists for this column
+			const existing = await ctx.db
+				.select()
+				.from(columnTransformations)
+				.where(
+					and(
+						eq(columnTransformations.userId, ctx.userId),
+						eq(columnTransformations.connectionId, input.connectionId),
+						isNull(columnTransformations.tableName),
+						eq(columnTransformations.columnName, input.columnName)
+					)
+				);
+
+			if (existing.length > 0) {
+				const existingTransformation = existing.at(0);
+				// Update existing transformation
+				const updated = await ctx.db
+					.update(columnTransformations)
+					.set({
+						transformationType: input.transformationType,
+						options: input.options,
+						isEnabled: input.isEnabled,
+					})
+					// biome-ignore lint/style/noNonNullAssertion: <explanation>
+					.where(eq(columnTransformations.id, existingTransformation!.id))
+					.returning();
+
+				return updated[0];
+			}
+
+			// Create new global transformation (tableName = null)
+			const result = await ctx.db
+				.insert(columnTransformations)
+				.values({
+					userId: ctx.userId,
+					connectionId: input.connectionId,
+					tableName: null,
+					columnName: input.columnName,
+					transformationType: input.transformationType,
+					options: input.options,
+					isEnabled: input.isEnabled,
+				})
+				.returning();
+
+			return result[0];
+		}),
+
+	// ==================== GLOBAL FILTERS ====================
+
+	/**
+	 * List all global column filters for a connection (tableName IS NULL)
+	 */
+	listGlobalFilters: protectedProcedure
+		.input(z.object({ connectionId: z.number() }))
+		.query(async ({ ctx, input }) => {
+			const filters = await ctx.db
+				.select()
+				.from(columnFilters)
+				.where(
+					and(
+						eq(columnFilters.userId, ctx.userId),
+						eq(columnFilters.connectionId, input.connectionId),
+						isNull(columnFilters.tableName)
+					)
+				);
+
+			return filters;
+		}),
+
+	/**
+	 * Create a global column filter (tableName = null)
+	 */
+	createGlobalFilter: protectedProcedure
+		.input(
+			z.object({
+				connectionId: z.number(),
+				columnName: z.string(),
+				filterType: z.enum([
+					"contains",
+					"equals",
+					"not_equals",
+					"starts_with",
+					"ends_with",
+					"greater_than",
+					"less_than",
+					"between",
+					"is_null",
+					"is_not_null",
+					"in_list",
+				]),
+				filterValue: z.string().nullable().optional(),
+				filterValueEnd: z.string().nullable().optional(),
+				isEnabled: z.boolean().default(true),
+			})
+		)
+		.mutation(async ({ ctx, input }) => {
+			// Create new global filter (tableName = null)
+			const result = await ctx.db
+				.insert(columnFilters)
+				.values({
+					userId: ctx.userId,
+					connectionId: input.connectionId,
+					tableName: null,
+					columnName: input.columnName,
+					filterType: input.filterType,
+					filterValue: input.filterValue,
+					filterValueEnd: input.filterValueEnd,
+					isEnabled: input.isEnabled,
+				})
+				.returning();
+
+			return result[0];
+		}),
+
 	// ==================== COLUMN TRANSFORMATIONS ====================
 
 	/**
@@ -19,6 +180,7 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.query(async ({ ctx, input }) => {
+			// Fetch both table-specific AND global transformations
 			const transformations = await ctx.db
 				.select()
 				.from(columnTransformations)
@@ -26,7 +188,10 @@ export const tableConfigRouter = createTRPCRouter({
 					and(
 						eq(columnTransformations.userId, ctx.userId),
 						eq(columnTransformations.connectionId, input.connectionId),
-						eq(columnTransformations.tableName, input.tableName)
+						or(
+							eq(columnTransformations.tableName, input.tableName),
+							isNull(columnTransformations.tableName)
+						)
 					)
 				);
 
@@ -203,6 +368,7 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.query(async ({ ctx, input }) => {
+			// Fetch both table-specific AND global filters
 			const filters = await ctx.db
 				.select()
 				.from(columnFilters)
@@ -210,7 +376,10 @@ export const tableConfigRouter = createTRPCRouter({
 					and(
 						eq(columnFilters.userId, ctx.userId),
 						eq(columnFilters.connectionId, input.connectionId),
-						eq(columnFilters.tableName, input.tableName)
+						or(
+							eq(columnFilters.tableName, input.tableName),
+							isNull(columnFilters.tableName)
+						)
 					)
 				);
 

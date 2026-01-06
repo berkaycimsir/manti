@@ -1,11 +1,26 @@
 "use client";
 
-import { X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, PlugZap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { api } from "~/trpc/react";
 
 interface ConnectionModalProps {
 	isOpen: boolean;
@@ -13,6 +28,8 @@ interface ConnectionModalProps {
 	onSubmit: (connection: any) => void;
 	initialData?: any;
 }
+
+type TestStatus = "idle" | "testing" | "success" | "failed";
 
 export default function ConnectionModal({
 	isOpen,
@@ -22,6 +39,9 @@ export default function ConnectionModal({
 }: ConnectionModalProps) {
 	const isEditing = !!initialData;
 	const [activeTab, setActiveTab] = useState("manual");
+	const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+	const [testMessage, setTestMessage] = useState("");
+	const [testLatency, setTestLatency] = useState<number | null>(null);
 	const [formData, setFormData] = useState({
 		name: "",
 		host: "localhost",
@@ -33,8 +53,16 @@ export default function ConnectionModal({
 		sslMode: "disable" as "disable" | "prefer" | "require" | "verify-full",
 	});
 
+	const testConnectionMutation =
+		api.database.testConnectionCredentials.useMutation();
+
 	useEffect(() => {
 		if (isOpen) {
+			// Reset test status when modal opens
+			setTestStatus("idle");
+			setTestMessage("");
+			setTestLatency(null);
+
 			if (initialData) {
 				setFormData({
 					name: initialData.name || "",
@@ -47,7 +75,11 @@ export default function ConnectionModal({
 					sslMode: initialData.sslMode || "disable",
 				});
 				if (initialData.connectionType) {
-					setActiveTab(initialData.connectionType);
+					setActiveTab(
+						initialData.connectionType === "connection_string"
+							? "connection-string"
+							: "manual"
+					);
 				}
 			} else {
 				// Reset for new connection
@@ -65,6 +97,60 @@ export default function ConnectionModal({
 			}
 		}
 	}, [isOpen, initialData]);
+
+	// Reset test status when form data changes
+	useEffect(() => {
+		if (testStatus !== "idle") {
+			setTestStatus("idle");
+			setTestMessage("");
+			setTestLatency(null);
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [formData, activeTab]);
+
+	const handleTestConnection = async () => {
+		setTestStatus("testing");
+		setTestMessage("");
+		setTestLatency(null);
+
+		try {
+			const input =
+				activeTab === "manual"
+					? {
+							connectionType: "manual" as const,
+							name: formData.name || "Test",
+							host: formData.host,
+							port: formData.port,
+							database: formData.database,
+							username: formData.username,
+							password: formData.password,
+							ssl: formData.sslMode !== "disable",
+							sslMode: formData.sslMode,
+						}
+					: {
+							connectionType: "connection_string" as const,
+							name: formData.name || "Test",
+							connectionString: formData.connectionString,
+						};
+
+			const result = await testConnectionMutation.mutateAsync(input);
+
+			if (result.success) {
+				setTestStatus("success");
+				setTestMessage(result.message);
+				setTestLatency(result.latencyMs);
+			} else {
+				setTestStatus("failed");
+				setTestMessage(result.message);
+				setTestLatency(result.latencyMs);
+			}
+		} catch (error) {
+			setTestStatus("failed");
+			setTestMessage(
+				error instanceof Error ? error.message : "Connection test failed"
+			);
+		}
+	};
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -90,32 +176,23 @@ export default function ConnectionModal({
 		}
 	};
 
-	if (!isOpen) return null;
-
 	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-			<Card className="w-full max-w-md p-6">
-				<div className="flex items-center justify-between">
-					<h2 className="font-bold text-foreground text-xl">
+		<Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+			<DialogContent className="sm:max-w-lg">
+				<DialogHeader>
+					<DialogTitle>
 						{isEditing ? "Edit Connection" : "New Connection"}
-					</h2>
-					<button
-						type="button"
-						onClick={onClose}
-						className="rounded p-1 transition-colors hover:bg-muted"
-					>
-						<X className="h-5 w-5 text-muted-foreground" />
-					</button>
-				</div>
+					</DialogTitle>
+					<DialogDescription>
+						{isEditing
+							? "Update your database connection settings."
+							: "Add a new PostgreSQL database connection."}
+					</DialogDescription>
+				</DialogHeader>
 
 				<form onSubmit={handleSubmit} className="space-y-4">
-					<div>
-						<label
-							htmlFor="conn-name"
-							className="mb-1 block font-medium text-foreground text-sm"
-						>
-							Connection Name
-						</label>
+					<div className="space-y-2">
+						<Label htmlFor="conn-name">Connection Name</Label>
 						<Input
 							id="conn-name"
 							placeholder="My Database"
@@ -139,13 +216,8 @@ export default function ConnectionModal({
 
 						<TabsContent value="manual" className="space-y-4">
 							<div className="grid grid-cols-2 gap-4">
-								<div>
-									<label
-										htmlFor="host"
-										className="mb-1 block font-medium text-foreground text-sm"
-									>
-										Host
-									</label>
+								<div className="space-y-2">
+									<Label htmlFor="host">Host</Label>
 									<Input
 										id="host"
 										placeholder="localhost"
@@ -156,13 +228,8 @@ export default function ConnectionModal({
 										required
 									/>
 								</div>
-								<div>
-									<label
-										htmlFor="port"
-										className="mb-1 block font-medium text-foreground text-sm"
-									>
-										Port
-									</label>
+								<div className="space-y-2">
+									<Label htmlFor="port">Port</Label>
 									<Input
 										id="port"
 										type="number"
@@ -179,13 +246,8 @@ export default function ConnectionModal({
 								</div>
 							</div>
 
-							<div>
-								<label
-									htmlFor="database"
-									className="mb-1 block font-medium text-foreground text-sm"
-								>
-									Database
-								</label>
+							<div className="space-y-2">
+								<Label htmlFor="database">Database</Label>
 								<Input
 									id="database"
 									placeholder="postgres"
@@ -197,13 +259,8 @@ export default function ConnectionModal({
 								/>
 							</div>
 
-							<div>
-								<label
-									htmlFor="username"
-									className="mb-1 block font-medium text-foreground text-sm"
-								>
-									Username
-								</label>
+							<div className="space-y-2">
+								<Label htmlFor="username">Username</Label>
 								<Input
 									id="username"
 									placeholder="postgres"
@@ -215,13 +272,8 @@ export default function ConnectionModal({
 								/>
 							</div>
 
-							<div>
-								<label
-									htmlFor="password"
-									className="mb-1 block font-medium text-foreground text-sm"
-								>
-									Password
-								</label>
+							<div className="space-y-2">
+								<Label htmlFor="password">Password</Label>
 								<Input
 									id="password"
 									type="password"
@@ -234,46 +286,39 @@ export default function ConnectionModal({
 								/>
 							</div>
 
-							<div>
-								<label
-									htmlFor="sslMode"
-									className="mb-1 block font-medium text-foreground text-sm"
-								>
-									SSL Mode
-								</label>
-								<select
-									id="sslMode"
+							<div className="space-y-2">
+								<Label htmlFor="sslMode">SSL Mode</Label>
+								<Select
 									value={formData.sslMode}
-									onChange={e =>
+									onValueChange={value =>
 										setFormData({
 											...formData,
-											sslMode: e.target.value as
-												| "disable"
-												| "prefer"
-												| "require"
-												| "verify-full",
+											sslMode: value as typeof formData.sslMode,
 										})
 									}
-									className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
 								>
-									<option value="disable">Disable - No SSL</option>
-									<option value="prefer">Prefer - Use SSL if available</option>
-									<option value="require">Require - Always use SSL</option>
-									<option value="verify-full">
-										Verify Full - SSL with certificate verification
-									</option>
-								</select>
+									<SelectTrigger>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="disable">Disable - No SSL</SelectItem>
+										<SelectItem value="prefer">
+											Prefer - Use SSL if available
+										</SelectItem>
+										<SelectItem value="require">
+											Require - Always use SSL
+										</SelectItem>
+										<SelectItem value="verify-full">
+											Verify Full - SSL with certificate verification
+										</SelectItem>
+									</SelectContent>
+								</Select>
 							</div>
 						</TabsContent>
 
 						<TabsContent value="connection-string" className="space-y-4">
-							<div>
-								<label
-									htmlFor="conn-string"
-									className="mb-1 block font-medium text-foreground text-sm"
-								>
-									Connection String
-								</label>
+							<div className="space-y-2">
+								<Label htmlFor="conn-string">Connection String</Label>
 								<Input
 									id="conn-string"
 									type="password"
@@ -291,29 +336,85 @@ export default function ConnectionModal({
 									}
 									required={!isEditing}
 								/>
+								<p className="text-muted-foreground text-xs">
+									Enter your PostgreSQL connection string.
+								</p>
 							</div>
-							<p className="text-muted-foreground text-xs">
-								Enter your PostgreSQL connection string. Example:
-								postgresql://user:password@host:5432/database
-							</p>
 						</TabsContent>
 					</Tabs>
 
-					<div className="flex gap-3 pt-4">
+					{/* Test Connection Result */}
+					{testStatus !== "idle" && (
+						<div
+							className={`flex items-center gap-3 rounded-lg border p-3 ${
+								testStatus === "success"
+									? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950"
+									: testStatus === "failed"
+										? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950"
+										: "border-muted bg-muted/50"
+							}`}
+						>
+							{testStatus === "testing" && (
+								<>
+									<Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+									<span className="text-muted-foreground text-sm">
+										Testing connection...
+									</span>
+								</>
+							)}
+							{testStatus === "success" && (
+								<>
+									<CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+									<div className="flex-1">
+										<p className="font-medium text-green-700 text-sm dark:text-green-300">
+											{testMessage}
+										</p>
+										{testLatency && (
+											<p className="text-green-600 text-xs dark:text-green-400">
+												Response time: {testLatency}ms
+											</p>
+										)}
+									</div>
+								</>
+							)}
+							{testStatus === "failed" && (
+								<>
+									<AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+									<div className="flex-1">
+										<p className="font-medium text-red-700 text-sm dark:text-red-300">
+											Connection failed
+										</p>
+										<p className="text-red-600 text-xs dark:text-red-400">
+											{testMessage}
+										</p>
+									</div>
+								</>
+							)}
+						</div>
+					)}
+
+					{/* Action Buttons */}
+					<div className="flex gap-3 pt-2">
 						<Button
 							type="button"
 							variant="outline"
-							onClick={onClose}
-							className="flex-1 bg-transparent"
+							onClick={handleTestConnection}
+							disabled={testStatus === "testing"}
+							className="flex-1"
 						>
-							Cancel
+							{testStatus === "testing" ? (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							) : (
+								<PlugZap className="mr-2 h-4 w-4" />
+							)}
+							Test Connection
 						</Button>
 						<Button type="submit" className="flex-1">
 							{isEditing ? "Save Changes" : "Connect"}
 						</Button>
 					</div>
 				</form>
-			</Card>
-		</div>
+			</DialogContent>
+		</Dialog>
 	);
 }

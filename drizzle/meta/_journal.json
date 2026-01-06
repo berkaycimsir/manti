@@ -1,48 +1,55 @@
 {
-	"version": "7",
-	"dialect": "postgresql",
-	"entries": [
-		{
-			"idx": 0,
-			"version": "7",
-			"when": 1765373489141,
-			"tag": "0000_fine_synch",
-			"breakpoints": true
-		},
-		{
-			"idx": 1,
-			"version": "7",
-			"when": 1766004426638,
-			"tag": "0001_add-saved-queries",
-			"breakpoints": true
-		},
-		{
-			"idx": 2,
-			"version": "7",
-			"when": 1766006652412,
-			"tag": "0002_nostalgic_grim_reaper",
-			"breakpoints": true
-		},
-		{
-			"idx": 3,
-			"version": "7",
-			"when": 1766008299279,
-			"tag": "0003_chunky_molecule_man",
-			"breakpoints": true
-		},
-		{
-			"idx": 4,
-			"version": "7",
-			"when": 1767615979166,
-			"tag": "0004_workable_monster_badoon",
-			"breakpoints": true
-		},
-		{
-			"idx": 5,
-			"version": "7",
-			"when": 1767646025302,
-			"tag": "0005_absent_secret_warriors",
-			"breakpoints": true
-		}
-	]
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1765373489141,
+      "tag": "0000_fine_synch",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766004426638,
+      "tag": "0001_add-saved-queries",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766006652412,
+      "tag": "0002_nostalgic_grim_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766008299279,
+      "tag": "0003_chunky_molecule_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1767615979166,
+      "tag": "0004_workable_monster_badoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1767646025302,
+      "tag": "0005_absent_secret_warriors",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1767709111961,
+      "tag": "0006_global_rules",
+      "breakpoints": true
+    }
+  ]
 }

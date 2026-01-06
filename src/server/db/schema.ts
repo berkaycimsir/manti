@@ -149,7 +149,9 @@ export const columnTransformations = createTable(
 		connectionId: integer("connection_id")
 			.notNull()
 			.references(() => databaseConnections.id, { onDelete: "cascade" }),
-		tableName: text("table_name").notNull(),
+		// NULL tableName = global rule (applies to all tables with this column)
+		// Non-null tableName = table-specific rule
+		tableName: text("table_name"),
 		columnName: text("column_name").notNull(),
 		// Transformation type: date, number, boolean, json, truncate, mask, custom
 		transformationType: text("transformation_type", {
@@ -197,7 +199,9 @@ export const columnFilters = createTable(
 		connectionId: integer("connection_id")
 			.notNull()
 			.references(() => databaseConnections.id, { onDelete: "cascade" }),
-		tableName: text("table_name").notNull(),
+		// NULL tableName = global filter (applies to all tables with this column)
+		// Non-null tableName = table-specific filter
+		tableName: text("table_name"),
 		columnName: text("column_name").notNull(),
 		// Filter type: contains, equals, startsWith, endsWith, greaterThan, lessThan, between, isNull, isNotNull
 		filterType: text("filter_type", {

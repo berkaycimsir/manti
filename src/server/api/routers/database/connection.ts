@@ -149,6 +149,56 @@ export const connectionRouter = createTRPCRouter({
 		}),
 
 	/**
+	 * Test connection credentials without saving
+	 * Returns success status and latency for UI feedback
+	 */
+	testConnectionCredentials: protectedProcedure
+		.input(connectionInputSchema)
+		.mutation(async ({ input }) => {
+			const startTime = Date.now();
+
+			try {
+				let connectionString: string;
+
+				if (input.connectionType === "connection_string") {
+					connectionString = input.connectionString;
+				} else {
+					// Build connection string from manual input
+					const sslParam = input.ssl ? `?sslmode=${input.sslMode}` : "";
+					connectionString = `postgresql://${encodeURIComponent(input.username)}:${encodeURIComponent(input.password)}@${input.host}:${input.port}/${input.database}${sslParam}`;
+				}
+
+				// Import postgres dynamically to test the connection
+				const { default: postgres } = await import("postgres");
+				const testDb = postgres(connectionString, {
+					max: 1,
+					idle_timeout: 5,
+					connect_timeout: 10,
+				});
+
+				// Execute a simple query to verify connection
+				await testDb`SELECT 1 as test`;
+				await testDb.end();
+
+				const latencyMs = Date.now() - startTime;
+
+				return {
+					success: true,
+					message: "Connection successful",
+					latencyMs,
+				};
+			} catch (error) {
+				const latencyMs = Date.now() - startTime;
+
+				return {
+					success: false,
+					message: error instanceof Error ? error.message : "Failed to connect",
+					latencyMs,
+				};
+			}
+		}),
+
+	/**
 	 * Get all connections for the current user
 	 */
 	listConnections: protectedProcedure.query(async ({ ctx }) => {

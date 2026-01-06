@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { DataExplorer } from "~/components/settings/data-explorer";
+import { SettingsSidebar } from "~/components/settings/settings-sidebar";
 import { DangerTab } from "~/components/settings/tabs/danger-tab";
 import { DataStorageTab } from "~/components/settings/tabs/data-storage-tab";
 import { ProfileTab } from "~/components/settings/tabs/profile-tab";
 import { SecurityTab } from "~/components/settings/tabs/security-tab";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Tabs, TabsContent } from "~/components/ui/tabs";
 import { useHeader } from "~/hooks/use-header";
 import { useSession } from "~/lib/auth-client";
 
@@ -24,30 +25,31 @@ export default function SettingsPage() {
 	);
 
 	return (
-		<div className="container mx-auto max-w-4xl space-y-8 py-6">
+		<div className="container mx-auto max-w-7xl py-6">
 			<Tabs defaultValue="profile" className="w-full">
-				<TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
-					<TabsTrigger value="profile">Profile</TabsTrigger>
-					<TabsTrigger value="security">Security</TabsTrigger>
-					<TabsTrigger value="data">Data & Storage</TabsTrigger>
-					<TabsTrigger value="danger">Danger Zone</TabsTrigger>
-				</TabsList>
+				<div className="flex min-h-[500px] flex-col overflow-hidden rounded-xl border bg-background shadow-sm lg:flex-row">
+					<div className="w-full border-r-0 border-b bg-muted/30 lg:w-[210px] lg:border-r lg:border-b-0">
+						<SettingsSidebar className="w-full lg:w-full" />
+					</div>
 
-				<TabsContent value="profile" className="space-y-4 pt-4">
-					<ProfileTab session={session} />
-				</TabsContent>
+					<div className="flex-1 p-6 lg:p-10">
+						<TabsContent value="profile" className="mt-0 space-y-6">
+							<ProfileTab session={session} />
+						</TabsContent>
 
-				<TabsContent value="security" className="space-y-4 pt-4">
-					<SecurityTab currentSessionToken={session?.session?.token} />
-				</TabsContent>
+						<TabsContent value="security" className="mt-0 space-y-6">
+							<SecurityTab currentSessionToken={session?.session?.token} />
+						</TabsContent>
 
-				<TabsContent value="data" className="space-y-6 pt-4">
-					<DataStorageTab onOpenExplorer={setExplorerTab} />
-				</TabsContent>
+						<TabsContent value="data" className="mt-0 space-y-6">
+							<DataStorageTab onOpenExplorer={setExplorerTab} />
+						</TabsContent>
 
-				<TabsContent value="danger" className="space-y-4 pt-4">
-					<DangerTab />
-				</TabsContent>
+						<TabsContent value="danger" className="mt-0 space-y-6">
+							<DangerTab />
+						</TabsContent>
+					</div>
+				</div>
 			</Tabs>
 
 			<DataExplorer

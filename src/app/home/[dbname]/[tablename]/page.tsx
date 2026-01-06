@@ -15,6 +15,7 @@ import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { TableDataSkeleton } from "~/components/ui/content-skeletons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { useColumnConfig } from "~/hooks/use-column-config";
 import { useHeader } from "~/hooks/use-header";
 import { api } from "~/trpc/react";
 
@@ -58,15 +59,13 @@ export default function TableDetailsPage() {
 		offset: 0,
 	});
 
-	// Fetch column transformations
-	const { data: transformations = [] } =
-		api.database.listColumnTransformations.useQuery({
-			connectionId,
-			tableName: tablename,
-		});
-
-	// Fetch column filters
-	const { data: filters = [] } = api.database.listColumnFilters.useQuery({
+	// Use the column config hook for transformations and filters
+	const {
+		mergedTransformations,
+		mergedFilters,
+		tableTransformations,
+		tableFilters,
+	} = useColumnConfig({
 		connectionId,
 		tableName: tablename,
 	});
@@ -77,6 +76,17 @@ export default function TableDetailsPage() {
 	}, [router, utils]);
 
 	const isLoading = columnsLoading || dataLoading;
+
+	// Count active table-specific transformations and filters
+	const activeTransformationsCount = useMemo(
+		() => tableTransformations.filter(t => t.isEnabled).length,
+		[tableTransformations]
+	);
+
+	const activeFiltersCount = useMemo(
+		() => tableFilters.filter(f => f.isEnabled).length,
+		[tableFilters]
+	);
 
 	// Memoized action buttons for header
 	const headerActions = useMemo(
@@ -89,9 +99,9 @@ export default function TableDetailsPage() {
 				>
 					<Filter className="h-4 w-4" />
 					Filters
-					{filters.filter(f => f.isEnabled).length > 0 && (
+					{activeFiltersCount > 0 && (
 						<span className="rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs">
-							{filters.filter(f => f.isEnabled).length}
+							{activeFiltersCount}
 						</span>
 					)}
 				</Button>
@@ -102,15 +112,15 @@ export default function TableDetailsPage() {
 				>
 					<Settings2 className="h-4 w-4" />
 					Transformations
-					{transformations.filter(t => t.isEnabled).length > 0 && (
+					{activeTransformationsCount > 0 && (
 						<span className="rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs">
-							{transformations.filter(t => t.isEnabled).length}
+							{activeTransformationsCount}
 						</span>
 					)}
 				</Button>
 			</>
 		),
-		[filters, transformations]
+		[activeFiltersCount, activeTransformationsCount]
 	);
 
 	// Memoized floating actions for when layout is hidden
@@ -194,41 +204,8 @@ export default function TableDetailsPage() {
 								rows={tableData?.rows ?? []}
 								searchQuery={searchQuery}
 								onSearchChange={setSearchQuery}
-								transformations={transformations.map(t => ({
-									columnName: t.columnName,
-									transformationType: t.transformationType as
-										| "date"
-										| "number"
-										| "boolean"
-										| "json"
-										| "truncate"
-										| "mask"
-										| "uppercase"
-										| "lowercase"
-										| "capitalize"
-										| "custom",
-									options: (t.options as Record<string, unknown>) ?? {},
-									isEnabled: t.isEnabled ?? true,
-								}))}
-								filters={filters.map(f => ({
-									id: f.id,
-									columnName: f.columnName,
-									filterType: f.filterType as
-										| "contains"
-										| "equals"
-										| "not_equals"
-										| "starts_with"
-										| "ends_with"
-										| "greater_than"
-										| "less_than"
-										| "between"
-										| "is_null"
-										| "is_not_null"
-										| "in_list",
-									filterValue: f.filterValue,
-									filterValueEnd: f.filterValueEnd,
-									isEnabled: f.isEnabled,
-								}))}
+								transformations={mergedTransformations}
+								filters={mergedFilters}
 							/>
 						)}
 					</TabsContent>

@@ -162,3 +162,22 @@ export function useLocalStorageManagement() {
 		triggerRefresh: () => setRefreshKey(k => k + 1),
 	};
 }
+
+/**
+ * Hook for logout functionality.
+ */
+export function useLogout() {
+	const router = useRouter();
+
+	const handleLogout = async () => {
+		await signOut({
+			fetchOptions: {
+				onSuccess: () => {
+					router.push("/");
+				},
+			},
+		});
+	};
+
+	return { handleLogout };
+}

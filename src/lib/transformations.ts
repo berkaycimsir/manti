@@ -3,24 +3,13 @@
  * These transformations are applied client-side for display purposes only
  */
 
-export type TransformationType =
-	| "date"
-	| "number"
-	| "boolean"
-	| "json"
-	| "truncate"
-	| "mask"
-	| "uppercase"
-	| "lowercase"
-	| "capitalize"
-	| "custom";
+import type {
+	TransformationConfig,
+	TransformationType,
+} from "~/types/transformations";
 
-export interface TransformationConfig {
-	columnName: string;
-	transformationType: TransformationType;
-	options: Record<string, unknown>;
-	isEnabled: boolean;
-}
+// Re-export types for backward compatibility
+export type { TransformationConfig, TransformationType };
 
 /**
  * Format a date value based on the specified format
