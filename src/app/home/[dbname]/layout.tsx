@@ -1,11 +1,11 @@
 "use client";
+import { useHeader } from "@shared/hooks/use-header";
+import { useGlobalSettingsStore } from "@shared/stores/global-settings-store";
+import { useThemeStore } from "@shared/stores/theme-store";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import type { ThemeColor } from "~/config/theme-config";
-import { useDashboardTabs } from "~/hooks/use-dashboard-tabs";
-import { useHeader } from "~/hooks/use-header";
-import { useGlobalSettingsStore } from "~/stores/global-settings-store";
-import { useThemeStore } from "~/stores/theme-store";
+import { useDashboardTabs } from "~/features/saved-queries";
 import { api } from "~/trpc/react";
 
 export default function DatabaseLayout({
@@ -55,7 +55,6 @@ export default function DatabaseLayout({
 			) {
 				event.preventDefault();
 				// TODO: Implement focus on database selector
-				console.log("Focus database selector");
 			}
 		};
 

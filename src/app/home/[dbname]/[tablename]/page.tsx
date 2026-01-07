@@ -1,22 +1,29 @@
 "use client";
 
+import { Button } from "@shared/components/ui/button";
+import { Card } from "@shared/components/ui/card";
+import { TableDataSkeleton } from "@shared/components/ui/content-skeletons";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@shared/components/ui/tabs";
+import { useHeader } from "@shared/hooks/use-header";
 import { Filter, Settings2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
+	FilterSidebar,
+	TransformationSidebar,
+	useColumnConfig,
+} from "~/features/column-rules";
+import {
 	AdvancedTableViewer,
 	type AdvancedTableViewerRef,
-} from "~/components/database/advanced-table-viewer";
-import { FilterSidebar } from "~/components/database/filter-sidebar";
-import { TableToolbar } from "~/components/database/table/table-header";
-import { TableStructure } from "~/components/database/tables/table-structure";
-import { TransformationSidebar } from "~/components/database/transformation-sidebar";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { TableDataSkeleton } from "~/components/ui/content-skeletons";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { useColumnConfig } from "~/hooks/use-column-config";
-import { useHeader } from "~/hooks/use-header";
+	TableStructure,
+	TableHeader as TableToolbar,
+} from "~/features/table-explorer";
 import { api } from "~/trpc/react";
 
 export default function TableDetailsPage() {

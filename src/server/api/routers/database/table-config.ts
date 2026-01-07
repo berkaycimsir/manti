@@ -1,9 +1,7 @@
-import { TRPCError } from "@trpc/server";
-import { and, eq, isNull, or } from "drizzle-orm";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { columnFilters, columnTransformations } from "~/server/db/schema";
+import { columnRulesService } from "~/server/services/column-rules-service";
 
 export const tableConfigRouter = createTRPCRouter({
 	// ==================== GLOBAL TRANSFORMATIONS ====================
@@ -14,18 +12,11 @@ export const tableConfigRouter = createTRPCRouter({
 	listGlobalTransformations: protectedProcedure
 		.input(z.object({ connectionId: z.number() }))
 		.query(async ({ ctx, input }) => {
-			const transformations = await ctx.db
-				.select()
-				.from(columnTransformations)
-				.where(
-					and(
-						eq(columnTransformations.userId, ctx.userId),
-						eq(columnTransformations.connectionId, input.connectionId),
-						isNull(columnTransformations.tableName)
-					)
-				);
-
-			return transformations;
+			return columnRulesService.listGlobalTransformations(
+				ctx.db,
+				ctx.userId,
+				input.connectionId
+			);
 		}),
 
 	/**
@@ -53,51 +44,10 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Check if global transformation already exists for this column
-			const existing = await ctx.db
-				.select()
-				.from(columnTransformations)
-				.where(
-					and(
-						eq(columnTransformations.userId, ctx.userId),
-						eq(columnTransformations.connectionId, input.connectionId),
-						isNull(columnTransformations.tableName),
-						eq(columnTransformations.columnName, input.columnName)
-					)
-				);
-
-			if (existing.length > 0) {
-				const existingTransformation = existing.at(0);
-				// Update existing transformation
-				const updated = await ctx.db
-					.update(columnTransformations)
-					.set({
-						transformationType: input.transformationType,
-						options: input.options,
-						isEnabled: input.isEnabled,
-					})
-					// biome-ignore lint/style/noNonNullAssertion: <explanation>
-					.where(eq(columnTransformations.id, existingTransformation!.id))
-					.returning();
-
-				return updated[0];
-			}
-
-			// Create new global transformation (tableName = null)
-			const result = await ctx.db
-				.insert(columnTransformations)
-				.values({
-					userId: ctx.userId,
-					connectionId: input.connectionId,
-					tableName: null,
-					columnName: input.columnName,
-					transformationType: input.transformationType,
-					options: input.options,
-					isEnabled: input.isEnabled,
-				})
-				.returning();
-
-			return result[0];
+			return columnRulesService.createTransformation(ctx.db, ctx.userId, {
+				...input,
+				tableName: null,
+			});
 		}),
 
 	// ==================== GLOBAL FILTERS ====================
@@ -108,18 +58,11 @@ export const tableConfigRouter = createTRPCRouter({
 	listGlobalFilters: protectedProcedure
 		.input(z.object({ connectionId: z.number() }))
 		.query(async ({ ctx, input }) => {
-			const filters = await ctx.db
-				.select()
-				.from(columnFilters)
-				.where(
-					and(
-						eq(columnFilters.userId, ctx.userId),
-						eq(columnFilters.connectionId, input.connectionId),
-						isNull(columnFilters.tableName)
-					)
-				);
-
-			return filters;
+			return columnRulesService.listGlobalFilters(
+				ctx.db,
+				ctx.userId,
+				input.connectionId
+			);
 		}),
 
 	/**
@@ -149,22 +92,10 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Create new global filter (tableName = null)
-			const result = await ctx.db
-				.insert(columnFilters)
-				.values({
-					userId: ctx.userId,
-					connectionId: input.connectionId,
-					tableName: null,
-					columnName: input.columnName,
-					filterType: input.filterType,
-					filterValue: input.filterValue,
-					filterValueEnd: input.filterValueEnd,
-					isEnabled: input.isEnabled,
-				})
-				.returning();
-
-			return result[0];
+			return columnRulesService.createFilter(ctx.db, ctx.userId, {
+				...input,
+				tableName: null,
+			});
 		}),
 
 	// ==================== COLUMN TRANSFORMATIONS ====================
@@ -180,22 +111,12 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.query(async ({ ctx, input }) => {
-			// Fetch both table-specific AND global transformations
-			const transformations = await ctx.db
-				.select()
-				.from(columnTransformations)
-				.where(
-					and(
-						eq(columnTransformations.userId, ctx.userId),
-						eq(columnTransformations.connectionId, input.connectionId),
-						or(
-							eq(columnTransformations.tableName, input.tableName),
-							isNull(columnTransformations.tableName)
-						)
-					)
-				);
-
-			return transformations;
+			return columnRulesService.listTableTransformations(
+				ctx.db,
+				ctx.userId,
+				input.connectionId,
+				input.tableName
+			);
 		}),
 
 	/**
@@ -224,56 +145,7 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Check if transformation already exists for this column
-			const existing = await ctx.db
-				.select()
-				.from(columnTransformations)
-				.where(
-					and(
-						eq(columnTransformations.userId, ctx.userId),
-						eq(columnTransformations.connectionId, input.connectionId),
-						eq(columnTransformations.tableName, input.tableName),
-						eq(columnTransformations.columnName, input.columnName)
-					)
-				);
-
-			if (existing.length > 0) {
-				const existingTransformation = existing.at(0);
-				if (!existingTransformation) {
-					throw new TRPCError({
-						code: "INTERNAL_SERVER_ERROR",
-						message: "Failed to find existing transformation",
-					});
-				}
-				// Update existing transformation
-				const updated = await ctx.db
-					.update(columnTransformations)
-					.set({
-						transformationType: input.transformationType,
-						options: input.options,
-						isEnabled: input.isEnabled,
-					})
-					.where(eq(columnTransformations.id, existingTransformation.id))
-					.returning();
-
-				return updated[0];
-			}
-
-			// Create new transformation
-			const result = await ctx.db
-				.insert(columnTransformations)
-				.values({
-					userId: ctx.userId,
-					connectionId: input.connectionId,
-					tableName: input.tableName,
-					columnName: input.columnName,
-					transformationType: input.transformationType,
-					options: input.options,
-					isEnabled: input.isEnabled,
-				})
-				.returning();
-
-			return result[0];
+			return columnRulesService.createTransformation(ctx.db, ctx.userId, input);
 		}),
 
 	/**
@@ -302,31 +174,13 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
-			const result = await ctx.db
-				.update(columnTransformations)
-				.set({
-					...(input.transformationType && {
-						transformationType: input.transformationType,
-					}),
-					...(input.options !== undefined && { options: input.options }),
-					...(input.isEnabled !== undefined && { isEnabled: input.isEnabled }),
-				})
-				.where(
-					and(
-						eq(columnTransformations.id, input.id),
-						eq(columnTransformations.userId, ctx.userId)
-					)
-				)
-				.returning();
-
-			if (!result.length) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Transformation not found",
-				});
-			}
-
-			return result[0];
+			const { id, ...data } = input;
+			return columnRulesService.updateTransformation(
+				ctx.db,
+				ctx.userId,
+				id,
+				data
+			);
 		}),
 
 	/**
@@ -335,24 +189,11 @@ export const tableConfigRouter = createTRPCRouter({
 	deleteColumnTransformation: protectedProcedure
 		.input(z.object({ id: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			const result = await ctx.db
-				.delete(columnTransformations)
-				.where(
-					and(
-						eq(columnTransformations.id, input.id),
-						eq(columnTransformations.userId, ctx.userId)
-					)
-				)
-				.returning();
-
-			if (!result.length) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Transformation not found",
-				});
-			}
-
-			return { success: true };
+			return columnRulesService.deleteTransformation(
+				ctx.db,
+				ctx.userId,
+				input.id
+			);
 		}),
 
 	// ==================== COLUMN FILTERS ====================
@@ -368,22 +209,12 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.query(async ({ ctx, input }) => {
-			// Fetch both table-specific AND global filters
-			const filters = await ctx.db
-				.select()
-				.from(columnFilters)
-				.where(
-					and(
-						eq(columnFilters.userId, ctx.userId),
-						eq(columnFilters.connectionId, input.connectionId),
-						or(
-							eq(columnFilters.tableName, input.tableName),
-							isNull(columnFilters.tableName)
-						)
-					)
-				);
-
-			return filters;
+			return columnRulesService.listTableFilters(
+				ctx.db,
+				ctx.userId,
+				input.connectionId,
+				input.tableName
+			);
 		}),
 
 	/**
@@ -414,21 +245,7 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
-			const result = await ctx.db
-				.insert(columnFilters)
-				.values({
-					userId: ctx.userId,
-					connectionId: input.connectionId,
-					tableName: input.tableName,
-					columnName: input.columnName,
-					filterType: input.filterType,
-					filterValue: input.filterValue,
-					filterValueEnd: input.filterValueEnd,
-					isEnabled: input.isEnabled,
-				})
-				.returning();
-
-			return result[0];
+			return columnRulesService.createFilter(ctx.db, ctx.userId, input);
 		}),
 
 	/**
@@ -459,24 +276,8 @@ export const tableConfigRouter = createTRPCRouter({
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
-			const { id, ...updates } = input;
-
-			const result = await ctx.db
-				.update(columnFilters)
-				.set(updates)
-				.where(
-					and(eq(columnFilters.id, id), eq(columnFilters.userId, ctx.userId))
-				)
-				.returning();
-
-			if (!result.length) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Filter not found",
-				});
-			}
-
-			return result[0];
+			const { id, ...data } = input;
+			return columnRulesService.updateFilter(ctx.db, ctx.userId, id, data);
 		}),
 
 	/**
@@ -485,23 +286,6 @@ export const tableConfigRouter = createTRPCRouter({
 	deleteColumnFilter: protectedProcedure
 		.input(z.object({ id: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			const result = await ctx.db
-				.delete(columnFilters)
-				.where(
-					and(
-						eq(columnFilters.id, input.id),
-						eq(columnFilters.userId, ctx.userId)
-					)
-				)
-				.returning();
-
-			if (!result.length) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Filter not found",
-				});
-			}
-
-			return { success: true };
+			return columnRulesService.deleteFilter(ctx.db, ctx.userId, input.id);
 		}),
 });

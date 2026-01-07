@@ -1,27 +1,22 @@
 "use client";
 
+import { Button } from "@shared/components/ui/button";
+import { Tabs, TabsContent } from "@shared/components/ui/tabs";
+import { useHeader } from "@shared/hooks/use-header";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
+import { useGlobalSettingsStore } from "@shared/stores/global-settings-store";
 import { Loader2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ConnectionSettingsSidebar } from "~/components/database/connection-settings-sidebar";
-import { GlobalRulesTab } from "~/components/database/global-rules-tab";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { GlobalRulesTab } from "~/features/column-rules";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "~/components/ui/select";
-import { Separator } from "~/components/ui/separator";
-import { Switch } from "~/components/ui/switch";
-import { Tabs, TabsContent } from "~/components/ui/tabs";
-import { THEME_COLORS } from "~/config/theme-config";
-import { useDashboardTabs } from "~/hooks/use-dashboard-tabs";
-import { useHeader } from "~/hooks/use-header";
-import { useGlobalSettingsStore } from "~/stores/global-settings-store";
+	ConnectionSettingsSidebar,
+	ExecutionSettingsTab,
+	GeneralSettingsTab,
+	NetworkSettingsTab,
+	SafetySettingsTab,
+} from "~/features/connections";
+import { useDashboardTabs } from "~/features/saved-queries";
 import { api } from "~/trpc/react";
 
 export default function ConnectionSettingsPage() {
@@ -38,11 +33,14 @@ export default function ConnectionSettingsPage() {
 		{ enabled: connectionId > 0 }
 	);
 
-	const updateMutation = api.database.updateConnection.useMutation({
-		onSuccess: () => {
-			utils.database.listConnections.invalidate();
-		},
-	});
+	const updateMutation = api.database.updateConnection.useMutation(
+		useMutationFactory({
+			successMessage: "Connection settings updated",
+			onSuccess: () => {
+				utils.database.listConnections.invalidate();
+			},
+		})
+	);
 
 	// Global settings
 	const { useConnectionThemeColor, setUseConnectionThemeColor } =
@@ -131,229 +129,47 @@ export default function ConnectionSettingsPage() {
 					</div>
 
 					<div className="flex-1 p-6 lg:p-10">
-						{/* General Tab */}
-						<TabsContent value="general" className="mt-0 space-y-6">
-							<div>
-								<h3 className="font-semibold text-lg">General</h3>
-								<p className="text-muted-foreground text-sm">
-									Display and interface preferences
-								</p>
-							</div>
-							<Separator />
-
-							<div className="space-y-6">
-								<div className="grid gap-6 sm:grid-cols-2">
-									<div className="space-y-2">
-										<Label htmlFor="name">Connection Name</Label>
-										<Input
-											id="name"
-											value={name}
-											onChange={e => setName(e.target.value)}
-											placeholder="My Database"
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label>Connection Color</Label>
-										<div className="flex flex-wrap gap-2">
-											{THEME_COLORS.map(c => (
-												<button
-													key={c.value}
-													type="button"
-													onClick={() => setColor(c.value)}
-													className={`h-9 w-9 rounded-full ${c.class} ring-2 ring-offset-2 ring-offset-background transition-all hover:scale-105 ${
-														color === c.value
-															? "scale-105 shadow-md ring-primary"
-															: "ring-transparent hover:ring-muted-foreground/30"
-													}`}
-													title={c.label}
-												/>
-											))}
-										</div>
-									</div>
-								</div>
-
-								<div className="grid gap-6 sm:grid-cols-2">
-									<div className="space-y-2">
-										<Label>Default Schema</Label>
-										<Select
-											value={defaultSchema || "_none"}
-											onValueChange={v =>
-												setDefaultSchema(v === "_none" ? null : v)
-											}
-										>
-											<SelectTrigger>
-												<SelectValue placeholder="No default schema" />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="_none">No default schema</SelectItem>
-												{schemas.map(s => (
-													<SelectItem key={s} value={s}>
-														{s}
-													</SelectItem>
-												))}
-											</SelectContent>
-										</Select>
-										<p className="text-muted-foreground text-xs">
-											Default search path for queries.
-										</p>
-									</div>
-
-									<div className="flex items-center justify-between rounded-lg border p-3">
-										<div className="space-y-0.5">
-											<Label className="text-sm">Use Connection Color</Label>
-											<p className="line-clamp-1 text-muted-foreground text-xs">
-												Apply this color to app theme.
-											</p>
-										</div>
-										<Switch
-											checked={useConnectionThemeColor}
-											onCheckedChange={setUseConnectionThemeColor}
-										/>
-									</div>
-								</div>
-							</div>
+						<TabsContent value="general" className="mt-0">
+							<GeneralSettingsTab
+								name={name}
+								onNameChange={setName}
+								color={color}
+								onColorChange={setColor}
+								defaultSchema={defaultSchema}
+								onDefaultSchemaChange={setDefaultSchema}
+								schemas={schemas}
+								useConnectionThemeColor={useConnectionThemeColor}
+								onUseConnectionThemeColorChange={setUseConnectionThemeColor}
+							/>
 						</TabsContent>
 
-						{/* Execution Tab */}
-						<TabsContent value="execution" className="mt-0 space-y-6">
-							<div>
-								<h3 className="font-semibold text-lg">Execution</h3>
-								<p className="text-muted-foreground text-sm">
-									Query runtime limits
-								</p>
-							</div>
-							<Separator />
-
-							<div className="grid gap-6 sm:grid-cols-2">
-								<div className="space-y-2">
-									<Label htmlFor="timeout">Query Timeout (seconds)</Label>
-									<Input
-										id="timeout"
-										type="number"
-										min={1}
-										max={3600}
-										value={queryTimeoutSeconds}
-										onChange={e =>
-											setQueryTimeoutSeconds(
-												Number.parseInt(e.target.value) || 60
-											)
-										}
-									/>
-									<p className="text-muted-foreground text-xs">
-										Hard limit on query execution time.
-									</p>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="rowLimit">Table View Limit</Label>
-									<Select
-										value={String(rowLimit)}
-										onValueChange={v => setRowLimit(Number.parseInt(v))}
-									>
-										<SelectTrigger>
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="100">100 rows</SelectItem>
-											<SelectItem value="500">500 rows</SelectItem>
-											<SelectItem value="1000">1,000 rows</SelectItem>
-											<SelectItem value="5000">5,000 rows</SelectItem>
-											<SelectItem value="10000">10,000 rows</SelectItem>
-										</SelectContent>
-									</Select>
-									<p className="text-muted-foreground text-xs">
-										Initial row count for table data.
-									</p>
-								</div>
-							</div>
+						<TabsContent value="execution" className="mt-0">
+							<ExecutionSettingsTab
+								queryTimeoutSeconds={queryTimeoutSeconds}
+								onQueryTimeoutChange={setQueryTimeoutSeconds}
+								rowLimit={rowLimit}
+								onRowLimitChange={setRowLimit}
+							/>
 						</TabsContent>
 
-						{/* Safety Tab */}
-						<TabsContent value="safety" className="mt-0 space-y-6">
-							<div>
-								<h3 className="font-semibold text-lg">Safety</h3>
-								<p className="text-muted-foreground text-sm">
-									Protection settings
-								</p>
-							</div>
-							<Separator />
-
-							<div className="space-y-4">
-								<div className="flex items-center justify-between rounded-lg border p-4">
-									<div className="space-y-0.5">
-										<Label>Read-only Mode</Label>
-										<p className="text-muted-foreground text-xs">
-											Block INSERT, UPDATE, DELETE queries.
-										</p>
-									</div>
-									<Switch
-										checked={isReadOnly}
-										onCheckedChange={setIsReadOnly}
-									/>
-								</div>
-								<div className="flex items-center justify-between rounded-lg border p-4">
-									<div className="space-y-0.5">
-										<Label>Confirm Destructive</Label>
-										<p className="text-muted-foreground text-xs">
-											Show warning before DROP/TRUNCATE.
-										</p>
-									</div>
-									<Switch
-										checked={confirmDestructive}
-										onCheckedChange={setConfirmDestructive}
-									/>
-								</div>
-							</div>
+						<TabsContent value="safety" className="mt-0">
+							<SafetySettingsTab
+								isReadOnly={isReadOnly}
+								onReadOnlyChange={setIsReadOnly}
+								confirmDestructive={confirmDestructive}
+								onConfirmDestructiveChange={setConfirmDestructive}
+							/>
 						</TabsContent>
 
-						{/* Network Tab */}
-						<TabsContent value="network" className="mt-0 space-y-6">
-							<div>
-								<h3 className="font-semibold text-lg">Network</h3>
-								<p className="text-muted-foreground text-sm">
-									Connection options
-								</p>
-							</div>
-							<Separator />
-
-							<div className="space-y-6">
-								<div className="space-y-2">
-									<Label htmlFor="keepAlive">Keep-alive (seconds)</Label>
-									<div className="flex gap-4">
-										<Input
-											id="keepAlive"
-											type="number"
-											min={0}
-											max={3600}
-											value={keepAliveSeconds}
-											onChange={e =>
-												setKeepAliveSeconds(
-													Number.parseInt(e.target.value) || 0
-												)
-											}
-											className="max-w-[200px]"
-										/>
-									</div>
-									<p className="text-muted-foreground text-xs">
-										Ping interval (0 = disabled).
-									</p>
-								</div>
-
-								<div className="flex items-center justify-between rounded-lg border p-4">
-									<div className="space-y-0.5">
-										<Label>Auto-reconnect</Label>
-										<p className="text-muted-foreground text-xs">
-											Automatically reconnect on connection loss.
-										</p>
-									</div>
-									<Switch
-										checked={autoReconnect}
-										onCheckedChange={setAutoReconnect}
-									/>
-								</div>
-							</div>
+						<TabsContent value="network" className="mt-0">
+							<NetworkSettingsTab
+								keepAliveSeconds={keepAliveSeconds}
+								onKeepAliveChange={setKeepAliveSeconds}
+								autoReconnect={autoReconnect}
+								onAutoReconnectChange={setAutoReconnect}
+							/>
 						</TabsContent>
 
-						{/* Global Rules Tab */}
 						<TabsContent value="global-rules" className="mt-0 space-y-6">
 							<GlobalRulesTab connectionId={connectionId} />
 						</TabsContent>

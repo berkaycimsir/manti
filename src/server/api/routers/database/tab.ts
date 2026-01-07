@@ -1,9 +1,7 @@
-import { TRPCError } from "@trpc/server";
-import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { databaseConnections, queryTabs } from "~/server/db/schema";
+import { tabService } from "~/server/services/tab-service";
 
 export const tabRouter = createTRPCRouter({
 	/**
@@ -12,18 +10,7 @@ export const tabRouter = createTRPCRouter({
 	listTabs: protectedProcedure
 		.input(z.object({ connectionId: z.number() }))
 		.query(async ({ ctx, input }) => {
-			const tabs = await ctx.db
-				.select()
-				.from(queryTabs)
-				.where(
-					and(
-						eq(queryTabs.connectionId, input.connectionId),
-						eq(queryTabs.userId, ctx.userId)
-					)
-				)
-				.orderBy(queryTabs.position);
-
-			return tabs;
+			return tabService.listTabs(ctx.db, ctx.userId, input.connectionId);
 		}),
 
 	/**
@@ -37,47 +24,7 @@ export const tabRouter = createTRPCRouter({
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Check connection exists
-			const connection = await ctx.db.query.databaseConnections.findFirst({
-				where: and(
-					eq(databaseConnections.id, input.connectionId),
-					eq(databaseConnections.userId, ctx.userId)
-				),
-			});
-
-			if (!connection) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Connection not found",
-				});
-			}
-
-			// Get max position to append
-			const maxPos = await ctx.db
-				.select({ value: queryTabs.position })
-				.from(queryTabs)
-				.where(
-					and(
-						eq(queryTabs.connectionId, input.connectionId),
-						eq(queryTabs.userId, ctx.userId)
-					)
-				)
-				.orderBy(desc(queryTabs.position))
-				.limit(1);
-
-			const position = (maxPos[0]?.value ?? -1) + 1;
-
-			const result = await ctx.db
-				.insert(queryTabs)
-				.values({
-					userId: ctx.userId,
-					connectionId: input.connectionId,
-					name: input.name,
-					position,
-				})
-				.returning();
-
-			return result[0];
+			return tabService.createTab(ctx.db, ctx.userId, input);
 		}),
 
 	/**
@@ -92,35 +39,8 @@ export const tabRouter = createTRPCRouter({
 			})
 		)
 		.mutation(async ({ ctx, input }) => {
-			// Only include defined fields in the update
-			const updateData: { name?: string; position?: number; updatedAt: Date } =
-				{
-					updatedAt: new Date(),
-				};
-
-			if (input.name !== undefined) {
-				updateData.name = input.name;
-			}
-			if (input.position !== undefined) {
-				updateData.position = input.position;
-			}
-
-			const result = await ctx.db
-				.update(queryTabs)
-				.set(updateData)
-				.where(
-					and(eq(queryTabs.id, input.id), eq(queryTabs.userId, ctx.userId))
-				)
-				.returning();
-
-			if (!result.length) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Tab not found",
-				});
-			}
-
-			return result[0];
+			const { id, ...data } = input;
+			return tabService.updateTab(ctx.db, ctx.userId, id, data);
 		}),
 
 	/**
@@ -129,20 +49,6 @@ export const tabRouter = createTRPCRouter({
 	deleteTab: protectedProcedure
 		.input(z.object({ id: z.number() }))
 		.mutation(async ({ ctx, input }) => {
-			const result = await ctx.db
-				.delete(queryTabs)
-				.where(
-					and(eq(queryTabs.id, input.id), eq(queryTabs.userId, ctx.userId))
-				)
-				.returning();
-
-			if (!result.length) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "Tab not found",
-				});
-			}
-
-			return { success: true };
+			return tabService.deleteTab(ctx.db, ctx.userId, input.id);
 		}),
 });

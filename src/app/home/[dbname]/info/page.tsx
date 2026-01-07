@@ -1,8 +1,8 @@
 "use client";
 
+import { Card } from "@shared/components/ui/card";
+import { useLayoutStore } from "@shared/stores/layout-store";
 import { useParams } from "next/navigation";
-import { Card } from "~/components/ui/card";
-import { useLayoutStore } from "~/stores/layout-store";
 import { api } from "~/trpc/react";
 
 export default function InfoPage() {

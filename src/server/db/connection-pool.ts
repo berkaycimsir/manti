@@ -1,9 +1,9 @@
-import { Kysely, PostgresDialect } from "kysely";
-import { Pool } from "pg";
 import {
 	CONNECTION_CLEANUP_INTERVAL,
 	CONNECTION_IDLE_TIMEOUT,
-} from "~/lib/constants";
+} from "@shared/lib/constants";
+import { Kysely, PostgresDialect } from "kysely";
+import { Pool } from "pg";
 import {
 	getConnectionLastUsed,
 	markConnectionAsInactive,

@@ -1,16 +1,18 @@
 "use client";
 
+import { Card } from "@shared/components/ui/card";
+import { TablesListSkeleton } from "@shared/components/ui/content-skeletons";
 import { Table } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { SchemaGroup } from "~/components/database/tables/schema-group";
-import { TableCard } from "~/components/database/tables/table-card";
-import { TablePreviewDialog } from "~/components/database/tables/table-preview-dialog";
-import { TableRow } from "~/components/database/tables/table-row";
-import { TablesHeader } from "~/components/database/tables/tables-header";
-import { Card } from "~/components/ui/card";
-import { TablesListSkeleton } from "~/components/ui/content-skeletons";
-import { useTablesViewStore } from "~/stores/tables-view-store";
+import {
+	SchemaGroup,
+	TableCard,
+	TablePreviewDialog,
+	TableRow,
+	TablesHeader,
+	useTableListStore,
+} from "~/features/table-explorer";
 import { api } from "~/trpc/react";
 
 interface TableInfo {
@@ -24,7 +26,7 @@ export default function TablesPage() {
 	const dbname = params?.dbname as string;
 
 	// View store
-	const { viewMode, sortBy, sortOrder, groupBySchema } = useTablesViewStore();
+	const { viewMode, sortBy, sortOrder, groupBySchema } = useTableListStore();
 
 	// Local state
 	const [searchQuery, setSearchQuery] = useState("");

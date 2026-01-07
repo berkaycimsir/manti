@@ -1,16 +1,17 @@
 "use client";
 
+import { Badge } from "@shared/components/ui/badge";
+import { Button } from "@shared/components/ui/button";
+import { Card } from "@shared/components/ui/card";
+import { QueryDetailSkeleton } from "@shared/components/ui/query-skeletons";
+import { useHeader } from "@shared/hooks/use-header";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
+import { useRecentPage } from "@shared/hooks/use-recent-page";
 import { Clock, Code, Loader2, Pencil, Play, RowsIcon } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import { AdvancedTableViewer } from "~/components/database/advanced-table-viewer";
-import { SqlPreview } from "~/components/database/query/sql-preview";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { QueryDetailSkeleton } from "~/components/ui/query-skeletons";
-import { useHeader } from "~/hooks/use-header";
-import { useRecentPage } from "~/hooks/use-recent-page";
+import { SqlPreview } from "~/features/saved-queries";
+import { AdvancedTableViewer } from "~/features/table-explorer";
 import { api } from "~/trpc/react";
 
 export default function QueryShowPage() {
@@ -29,16 +30,18 @@ export default function QueryShowPage() {
 		{ enabled: !!queryId }
 	);
 
-	const executeMutation = api.database.executeSavedQuery.useMutation({
-		onSuccess: data => {
-			setExecutionResult(data.result);
-			setExecutionTime(data.executionTimeMs);
-			setIsExecuting(false);
-		},
-		onError: () => {
-			setIsExecuting(false);
-		},
-	});
+	const executeMutation = api.database.executeSavedQuery.useMutation(
+		useMutationFactory({
+			onSuccess: data => {
+				setExecutionResult(data.result);
+				setExecutionTime(data.executionTimeMs);
+				setIsExecuting(false);
+			},
+			onError: () => {
+				setIsExecuting(false);
+			},
+		})
+	);
 
 	const handleExecute = () => {
 		if (!queryId) return;
@@ -92,7 +95,39 @@ export default function QueryShowPage() {
 				</Button>
 			</>
 		),
-		[isExecuting, query?.id, dbname]
+		[isExecuting, query?.id, dbname, handleExecute, router]
+	);
+
+	// Memoized floating actions for when layout is hidden
+	const floatingActions = useMemo(
+		() => (
+			<>
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() =>
+						router.push(`/home/${dbname}/query/edit?id=${query?.id}`)
+					}
+					className="shadow-md"
+				>
+					<Pencil className="mr-2 h-4 w-4" /> Edit
+				</Button>
+				<Button
+					onClick={handleExecute}
+					disabled={isExecuting}
+					size="sm"
+					className="shadow-md"
+				>
+					{isExecuting ? (
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+					) : (
+						<Play className="mr-2 h-4 w-4" />
+					)}
+					Run
+				</Button>
+			</>
+		),
+		[isExecuting, query?.id, dbname, handleExecute, router]
 	);
 
 	// Memoized subtitle with badge
@@ -116,6 +151,7 @@ export default function QueryShowPage() {
 		subtitle: subtitle,
 		onBack: handleBack,
 		actions: headerActions,
+		floatingActions: floatingActions,
 	});
 
 	// Track in recent pages with specific query name

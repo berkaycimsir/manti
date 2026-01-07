@@ -1,11 +1,12 @@
 "use client";
 
+import { Button } from "@shared/components/ui/button";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
+import { useLayoutStore } from "@shared/stores/layout-store";
 import { Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { QueryTabsManager } from "~/components/database/query/query-tabs-manager";
-import { Button } from "~/components/ui/button";
-import { useLayoutStore } from "~/stores/layout-store";
+import { QueryTabsManager } from "~/features/saved-queries";
 import { api } from "~/trpc/react";
 
 export default function SavedQueriesPage() {
@@ -22,18 +23,23 @@ export default function SavedQueriesPage() {
 	const connectionId = Number.parseInt(dbname.split("-").pop() || "0", 10);
 
 	// Delete mutation
-	const deleteMutation = api.database.deleteSavedQuery.useMutation({
-		onSuccess: () => {
-			void utils.database.listSavedQueries.invalidate({ connectionId });
-		},
-	});
+	const deleteMutation = api.database.deleteSavedQuery.useMutation(
+		useMutationFactory({
+			successMessage: "Saved query deleted",
+			onSuccess: () => {
+				void utils.database.listSavedQueries.invalidate({ connectionId });
+			},
+		})
+	);
 
 	// Execute mutation
-	const executeMutation = api.database.executeSavedQuery.useMutation({
-		onSuccess: () => {
-			void utils.database.listSavedQueries.invalidate({ connectionId });
-		},
-	});
+	const executeMutation = api.database.executeSavedQuery.useMutation(
+		useMutationFactory({
+			onSuccess: () => {
+				void utils.database.listSavedQueries.invalidate({ connectionId });
+			},
+		})
+	);
 
 	const _toggleExpanded = (id: number) => {
 		const newExpanded = new Set(expandedQueries);

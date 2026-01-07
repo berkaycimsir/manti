@@ -1,22 +1,25 @@
 "use client";
 
+import ToggleThemeButton from "@shared/components/common/theme-toggle";
+import { Sidebar } from "@shared/components/layout/sidebar";
+import { Button } from "@shared/components/ui/button";
+import {
+	HeaderProvider,
+	useHeaderContext,
+} from "@shared/context/header-context";
+import { useLayoutStore } from "@shared/stores/layout-store";
+import { useSidebarStore } from "@shared/stores/sidebar-store";
 import { ArrowLeft, PanelLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Sidebar } from "~/components/sidebar";
-import ToggleThemeButton from "~/components/toggle-theme-button";
-import { Button } from "~/components/ui/button";
-import { useHeaderStore } from "~/stores/header-store";
-import { useLayoutStore } from "~/stores/layout-store";
-import { useSidebarStore } from "~/stores/sidebar-store";
 import { api } from "~/trpc/react";
 
 /**
- * PageHeader component that renders the header based on Zustand store
+ * PageHeader component that renders the header based on Context
  */
 function PageHeader() {
 	const router = useRouter();
-	const headerConfig = useHeaderStore(state => state.headerConfig);
+	const { headerConfig } = useHeaderContext();
 	const isLayoutVisible = useLayoutStore(state => state.isLayoutVisible);
 
 	// No header config registered - page handles its own header or none needed
@@ -102,7 +105,7 @@ function PageHeader() {
  * Main content wrapper that handles padding when layout is hidden
  */
 function ContentWrapper({ children }: { children: React.ReactNode }) {
-	const headerConfig = useHeaderStore(state => state.headerConfig);
+	const { headerConfig } = useHeaderContext();
 	const isLayoutVisible = useLayoutStore(state => state.isLayoutVisible);
 
 	// Apply top padding when layout is hidden to avoid overlap with floating button
@@ -120,7 +123,7 @@ function ContentWrapper({ children }: { children: React.ReactNode }) {
 	);
 }
 
-export default function HomeLayout({
+function HomeLayoutContent({
 	children,
 }: {
 	children: React.ReactNode;
@@ -254,5 +257,17 @@ export default function HomeLayout({
 				<ContentWrapper>{children}</ContentWrapper>
 			</div>
 		</div>
+	);
+}
+
+export default function HomeLayout({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	return (
+		<HeaderProvider>
+			<HomeLayoutContent>{children}</HomeLayoutContent>
+		</HeaderProvider>
 	);
 }

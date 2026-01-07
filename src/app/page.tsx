@@ -1,11 +1,11 @@
+import { auth } from "@server/lib/auth";
+import ToggleThemeButton from "@shared/components/common/theme-toggle";
+import { Button } from "@shared/components/ui/button";
 import { ArrowRight, Database } from "lucide-react";
 import { headers } from "next/headers";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import ToggleThemeButton from "~/components/toggle-theme-button";
-import { Button } from "~/components/ui/button";
-import { auth } from "~/lib/auth";
 
 const features = [
 	{

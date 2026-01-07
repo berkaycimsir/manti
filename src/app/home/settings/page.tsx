@@ -1,15 +1,17 @@
 "use client";
 
+import { useSession } from "@features/auth/lib/auth-client";
+import { Tabs, TabsContent } from "@shared/components/ui/tabs";
+import { useHeader } from "@shared/hooks/use-header";
 import { useState } from "react";
-import { DataExplorer } from "~/components/settings/data-explorer";
-import { SettingsSidebar } from "~/components/settings/settings-sidebar";
-import { DangerTab } from "~/components/settings/tabs/danger-tab";
-import { DataStorageTab } from "~/components/settings/tabs/data-storage-tab";
-import { ProfileTab } from "~/components/settings/tabs/profile-tab";
-import { SecurityTab } from "~/components/settings/tabs/security-tab";
-import { Tabs, TabsContent } from "~/components/ui/tabs";
-import { useHeader } from "~/hooks/use-header";
-import { useSession } from "~/lib/auth-client";
+import {
+	DangerTab,
+	DataExplorer,
+	DataStorageTab,
+	ProfileTab,
+	SecurityTab,
+	SettingsSidebar,
+} from "~/features/settings";
 
 export default function SettingsPage() {
 	const { data: session } = useSession();

@@ -1,21 +1,22 @@
 "use client";
 
+import { Button } from "@shared/components/ui/button";
+import { Card } from "@shared/components/ui/card";
+import { ConnectionGridSkeleton } from "@shared/components/ui/content-skeletons";
+import { useHeader } from "@shared/hooks/use-header";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
+import { CONNECTION_CLEANUP_INTERVAL } from "@shared/lib/constants";
 import { Database } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import ConnectionModal from "~/components/connection-modal";
 import {
 	type Connection,
 	ConnectionCard,
-} from "~/components/home/connection-card";
-import { ConnectionRow } from "~/components/home/connection-row";
-import { ConnectionsHeader } from "~/components/home/connections-header";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { ConnectionGridSkeleton } from "~/components/ui/content-skeletons";
-import { useHeader } from "~/hooks/use-header";
-import { CONNECTION_CLEANUP_INTERVAL } from "~/lib/constants";
-import { useHomeViewStore } from "~/stores/home-view-store";
+	ConnectionModal,
+	ConnectionRow,
+	ConnectionsHeader,
+	useHomeViewStore,
+} from "~/features/connections";
 import { api } from "~/trpc/react";
 
 export default function HomePage() {
@@ -48,42 +49,57 @@ export default function HomePage() {
 	}, [refetch]);
 
 	// Mutation to create connection
-	const createConnectionMutation = api.database.createConnection.useMutation({
-		onSuccess: () => {
-			setShowConnectionModal(false);
-			void refetch();
-		},
-	});
+	const createConnectionMutation = api.database.createConnection.useMutation(
+		useMutationFactory({
+			successMessage: "Connection created successfully",
+			onSuccess: () => {
+				setShowConnectionModal(false);
+				void refetch();
+			},
+		})
+	);
 
 	// Mutation to update connection (Edit)
-	const updateConnectionMutation = api.database.updateConnection.useMutation({
-		onSuccess: () => {
-			setShowConnectionModal(false);
-			setConnectionToEdit(null);
-			void refetch();
-		},
-	});
+	const updateConnectionMutation = api.database.updateConnection.useMutation(
+		useMutationFactory({
+			successMessage: "Connection updated successfully",
+			onSuccess: () => {
+				setShowConnectionModal(false);
+				setConnectionToEdit(null);
+				void refetch();
+			},
+		})
+	);
 
 	// Mutation to delete connection
-	const deleteConnectionMutation = api.database.deleteConnection.useMutation({
-		onSuccess: () => {
-			void refetch();
-		},
-	});
+	const deleteConnectionMutation = api.database.deleteConnection.useMutation(
+		useMutationFactory({
+			successMessage: "Connection deleted successfully",
+			onSuccess: () => {
+				void refetch();
+			},
+		})
+	);
 
 	// Mutation to reconnect
-	const reconnectMutation = api.database.reconnectConnection.useMutation({
-		onSuccess: () => {
-			void refetch();
-		},
-	});
+	const reconnectMutation = api.database.reconnectConnection.useMutation(
+		useMutationFactory({
+			successMessage: "Reconnected successfully",
+			onSuccess: () => {
+				void refetch();
+			},
+		})
+	);
 
 	// Mutation to close connection (Disconnect)
-	const disconnectMutation = api.database.updateConnection.useMutation({
-		onSuccess: () => {
-			void utils.database.listConnections.invalidate();
-		},
-	});
+	const disconnectMutation = api.database.updateConnection.useMutation(
+		useMutationFactory({
+			successMessage: "Disconnected successfully",
+			onSuccess: () => {
+				void utils.database.listConnections.invalidate();
+			},
+		})
+	);
 
 	// Filter and Sort
 	const processedConnections = useMemo(() => {
