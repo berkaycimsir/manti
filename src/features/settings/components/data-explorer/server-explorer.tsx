@@ -3,6 +3,7 @@
 import { Badge } from "@shared/components/ui/badge";
 import { Button } from "@shared/components/ui/button";
 import { ScrollArea } from "@shared/components/ui/scroll-area";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
 import {
 	Archive,
 	Database,
@@ -58,12 +59,15 @@ export function ServerDataExplorer() {
 		api.userData.getDetailedUsage.useQuery();
 
 	const clearConnectionDataMutation =
-		api.userData.clearConnectionData.useMutation({
-			onSuccess: () => {
-				utils.userData.getDetailedUsage.invalidate();
-				utils.userData.getSummary.invalidate();
-			},
-		});
+		api.userData.clearConnectionData.useMutation(
+			useMutationFactory({
+				successMessage: "Data cleared for connection",
+				onSuccess: () => {
+					utils.userData.getDetailedUsage.invalidate();
+					utils.userData.getSummary.invalidate();
+				},
+			})
+		);
 
 	const handleClear = async (
 		connectionId: number,

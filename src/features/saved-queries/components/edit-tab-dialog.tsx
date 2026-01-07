@@ -11,6 +11,7 @@ import {
 } from "@shared/components/ui/dialog";
 import { Input } from "@shared/components/ui/input";
 import { Label } from "@shared/components/ui/label";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
 import { Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "~/trpc/react";
@@ -37,22 +38,28 @@ export function EditTabDialog({
 
 	const utils = api.useUtils();
 
-	const updateTabMutation = api.database.updateTab.useMutation({
-		onSuccess: () => {
-			utils.database.listTabs.invalidate({ connectionId });
-			onSuccess();
-		},
-	});
+	const updateTabMutation = api.database.updateTab.useMutation(
+		useMutationFactory({
+			successMessage: "Tab updated",
+			onSuccess: () => {
+				utils.database.listTabs.invalidate({ connectionId });
+				onSuccess();
+			},
+		})
+	);
 
-	const deleteTabMutation = api.database.deleteTab.useMutation({
-		onSuccess: () => {
-			utils.database.listTabs.invalidate({ connectionId });
-			utils.database.listSavedQueries.invalidate({ connectionId });
-			setShowDeleteConfirm(false);
-			onOpenChange(false);
-			onSuccess();
-		},
-	});
+	const deleteTabMutation = api.database.deleteTab.useMutation(
+		useMutationFactory({
+			successMessage: "Tab deleted",
+			onSuccess: () => {
+				utils.database.listTabs.invalidate({ connectionId });
+				utils.database.listSavedQueries.invalidate({ connectionId });
+				setShowDeleteConfirm(false);
+				onOpenChange(false);
+				onSuccess();
+			},
+		})
+	);
 
 	// Sync name with tab prop when dialog opens
 	useEffect(() => {

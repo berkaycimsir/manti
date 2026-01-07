@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient, signOut } from "@features/auth/lib/auth-client";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "~/trpc/react";
@@ -60,13 +61,19 @@ export function useSessionManagement() {
 	const { data: sessions, isLoading: isLoadingSessions } =
 		api.auth.listSessions.useQuery();
 
-	const revokeSessionMutation = api.auth.revokeSession.useMutation({
-		onSuccess: () => utils.auth.listSessions.invalidate(),
-	});
+	const revokeSessionMutation = api.auth.revokeSession.useMutation(
+		useMutationFactory({
+			successMessage: "Session revoked",
+			onSuccess: () => utils.auth.listSessions.invalidate(),
+		})
+	);
 
-	const revokeAllMutation = api.auth.revokeAllOtherSessions.useMutation({
-		onSuccess: () => utils.auth.listSessions.invalidate(),
-	});
+	const revokeAllMutation = api.auth.revokeAllOtherSessions.useMutation(
+		useMutationFactory({
+			successMessage: "All other sessions revoked",
+			onSuccess: () => utils.auth.listSessions.invalidate(),
+		})
+	);
 
 	return {
 		sessions,
@@ -84,12 +91,15 @@ export function useSessionManagement() {
 export function useAccountDeletion() {
 	const router = useRouter();
 
-	const deleteAccountMutation = api.auth.deleteAccount.useMutation({
-		onSuccess: async () => {
-			await signOut();
-			router.push("/sign-in");
-		},
-	});
+	const deleteAccountMutation = api.auth.deleteAccount.useMutation(
+		useMutationFactory({
+			successMessage: "Account deleted",
+			onSuccess: async () => {
+				await signOut();
+				router.push("/sign-in");
+			},
+		})
+	);
 
 	return {
 		deleteAccount: () => deleteAccountMutation.mutate(),
@@ -114,12 +124,15 @@ export function useDataManagement() {
 		{ staleTime: 5 * 60 * 1000 }
 	);
 
-	const clearMutation = api.userData.clearData.useMutation({
-		onSuccess: () => {
-			utils.userData.getSummary.invalidate();
-			utils.userData.getDetailedUsage.invalidate();
-		},
-	});
+	const clearMutation = api.userData.clearData.useMutation(
+		useMutationFactory({
+			successMessage: "Data cleared",
+			onSuccess: () => {
+				utils.userData.getSummary.invalidate();
+				utils.userData.getDetailedUsage.invalidate();
+			},
+		})
+	);
 
 	const handleClearCloudData = (
 		type: "connections" | "queries" | "tabs" | "filters" | "transformations"

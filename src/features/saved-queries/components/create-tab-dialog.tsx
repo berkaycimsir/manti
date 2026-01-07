@@ -10,6 +10,7 @@ import {
 } from "@shared/components/ui/dialog";
 import { Input } from "@shared/components/ui/input";
 import { Label } from "@shared/components/ui/label";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
 import { useState } from "react";
 import { api } from "~/trpc/react";
 
@@ -27,12 +28,15 @@ export function CreateTabDialog({
 	onSuccess,
 }: CreateTabDialogProps) {
 	const [name, setName] = useState("");
-	const createTabMutation = api.database.createTab.useMutation({
-		onSuccess: () => {
-			setName("");
-			onSuccess();
-		},
-	});
+	const createTabMutation = api.database.createTab.useMutation(
+		useMutationFactory({
+			successMessage: "Tab created",
+			onSuccess: () => {
+				setName("");
+				onSuccess();
+			},
+		})
+	);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();

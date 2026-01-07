@@ -2,6 +2,7 @@
 
 import { Button } from "@shared/components/ui/button";
 import { KanbanSkeleton } from "@shared/components/ui/content-skeletons";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
 import { LayoutGrid, List, Plus } from "lucide-react";
 import { useState } from "react";
 import { api } from "~/trpc/react";
@@ -46,92 +47,105 @@ export function QueryTabsManager({
 	// Mutations
 	const utils = api.useUtils();
 
-	const executeMutation = api.database.executeSavedQuery.useMutation({
-		onSuccess: () =>
-			utils.database.listSavedQueries.invalidate({ connectionId }),
-	});
+	const executeMutation = api.database.executeSavedQuery.useMutation(
+		useMutationFactory({
+			successMessage: "Query executed",
+			onSuccess: () =>
+				utils.database.listSavedQueries.invalidate({ connectionId }),
+		})
+	);
 
-	const deleteMutation = api.database.deleteSavedQuery.useMutation({
-		onSuccess: () =>
-			utils.database.listSavedQueries.invalidate({ connectionId }),
-	});
+	const deleteMutation = api.database.deleteSavedQuery.useMutation(
+		useMutationFactory({
+			successMessage: "Query deleted",
+			onSuccess: () =>
+				utils.database.listSavedQueries.invalidate({ connectionId }),
+		})
+	);
 
 	// Optimistic update for tab position
-	const updateTabMutation = api.database.updateTab.useMutation({
-		onMutate: async newTab => {
-			// Cancel outgoing refetches
-			await utils.database.listTabs.cancel({ connectionId });
+	const updateTabMutation = api.database.updateTab.useMutation(
+		useMutationFactory({
+			onMutate: async newTab => {
+				// Cancel outgoing refetches
+				await utils.database.listTabs.cancel({ connectionId });
 
-			// Snapshot previous value
-			const previousTabs = utils.database.listTabs.getData({ connectionId });
+				// Snapshot previous value
+				const previousTabs = utils.database.listTabs.getData({ connectionId });
 
-			// Optimistically update
-			if (previousTabs && newTab.position !== undefined) {
-				utils.database.listTabs.setData({ connectionId }, old => {
-					if (!old) return [];
-					return old
-						.map(t => {
-							if (t.id === newTab.id) {
-								return { ...t, position: newTab.position ?? t.position };
-							}
-							return t;
-						})
-						.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
-				});
-			}
+				// Optimistically update
+				if (previousTabs && newTab.position !== undefined) {
+					utils.database.listTabs.setData({ connectionId }, old => {
+						if (!old) return [];
+						return old
+							.map(t => {
+								if (t.id === newTab.id) {
+									return { ...t, position: newTab.position ?? t.position };
+								}
+								return t;
+							})
+							.sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+					});
+				}
 
-			return { previousTabs };
-		},
-		onError: (_err, _newTab, context) => {
-			// Rollback on error
-			if (context?.previousTabs) {
-				utils.database.listTabs.setData({ connectionId }, context.previousTabs);
-			}
-		},
-		onSettled: () => {
-			// Sync with server
-			utils.database.listTabs.invalidate({ connectionId });
-		},
-	});
+				return { previousTabs };
+			},
+			onError: (_err, _newTab, context) => {
+				// Rollback on error
+				if (context?.previousTabs) {
+					utils.database.listTabs.setData(
+						{ connectionId },
+						context.previousTabs
+					);
+				}
+			},
+			onSettled: () => {
+				// Sync with server
+				utils.database.listTabs.invalidate({ connectionId });
+			},
+		})
+	);
 
 	// Optimistic update for query tab changes
-	const updateQueryMutation = api.database.updateSavedQuery.useMutation({
-		onMutate: async newQuery => {
-			await utils.database.listSavedQueries.cancel({ connectionId });
+	const updateQueryMutation = api.database.updateSavedQuery.useMutation(
+		useMutationFactory({
+			onMutate: async newQuery => {
+				await utils.database.listSavedQueries.cancel({ connectionId });
 
-			const previousQueries = utils.database.listSavedQueries.getData({
-				connectionId,
-			});
-
-			if (previousQueries) {
-				utils.database.listSavedQueries.setData({ connectionId }, old => {
-					if (!old) return [];
-					return old.map(q => {
-						if (q.id === newQuery.id) {
-							return {
-								...q,
-								...newQuery,
-							} as typeof q;
-						}
-						return q;
-					});
+				const previousQueries = utils.database.listSavedQueries.getData({
+					connectionId,
 				});
-			}
 
-			return { previousQueries };
-		},
-		onError: (_err, _newQuery, context) => {
-			if (context?.previousQueries) {
-				utils.database.listSavedQueries.setData(
-					{ connectionId },
-					context.previousQueries
-				);
-			}
-		},
-		onSettled: () => {
-			utils.database.listSavedQueries.invalidate({ connectionId });
-		},
-	});
+				if (previousQueries) {
+					utils.database.listSavedQueries.setData({ connectionId }, old => {
+						if (!old) return [];
+						return old.map(q => {
+							if (q.id === newQuery.id) {
+								return {
+									...q,
+									...newQuery,
+								} as typeof q;
+							}
+							return q;
+						});
+					});
+				}
+
+				return { previousQueries };
+			},
+			onError: (_err, _newQuery, context) => {
+				if (context?.previousQueries) {
+					utils.database.listSavedQueries.setData(
+						{ connectionId },
+						context.previousQueries
+					);
+				}
+			},
+			onSettled: () => {
+				utils.database.listSavedQueries.invalidate({ connectionId });
+			},
+		})
+	);
 
 	const handleCreateTabSuccess = () => {
 		setIsCreateTabOpen(false);

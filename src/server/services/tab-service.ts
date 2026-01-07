@@ -1,7 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 
-import { databaseConnections, queryTabs } from "~/server/db/schema";
+import {
+	databaseConnections,
+	queryTabs,
+	savedQueries,
+} from "~/server/db/schema";
 
 type Db = typeof import("~/server/db").db;
 
@@ -102,6 +106,13 @@ export const tabService = {
 	},
 
 	async deleteTab(db: Db, userId: string, id: number) {
+		// First, set any queries in this tab to uncategorized (tabId = null)
+		await db
+			.update(savedQueries)
+			.set({ tabId: null })
+			.where(eq(savedQueries.tabId, id));
+
+		// Then delete the tab
 		const result = await db
 			.delete(queryTabs)
 			.where(and(eq(queryTabs.id, id), eq(queryTabs.userId, userId)))

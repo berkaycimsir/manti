@@ -33,6 +33,10 @@ export default function QueryShowPage() {
 	const executeMutation = api.database.executeSavedQuery.useMutation(
 		useMutationFactory({
 			onSuccess: data => {
+				if (!data) {
+					setIsExecuting(false);
+					return;
+				}
 				setExecutionResult(data.result);
 				setExecutionTime(data.executionTimeMs);
 				setIsExecuting(false);
@@ -190,7 +194,7 @@ export default function QueryShowPage() {
 
 				{/* Results with Advanced Table Viewer */}
 				<div className="flex flex-1 flex-col gap-2 overflow-hidden">
-					<div className="flex min-h-[40px] items-center justify-between">
+					<div className="flex min-h-10 items-center justify-between">
 						{currentExecutionTime !== null && (
 							<div className="flex items-center gap-4 rounded-md bg-muted/30 px-2 py-1 text-muted-foreground text-sm">
 								<span className="flex items-center gap-1">

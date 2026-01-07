@@ -2,6 +2,7 @@
 
 import { Button } from "@shared/components/ui/button";
 import { useHeader } from "@shared/hooks/use-header";
+import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
 import { useRecentPage } from "@shared/hooks/use-recent-page";
 import { Loader2 } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -51,6 +52,16 @@ export default function QueryEditPage() {
 	// Fetch tabs
 	const { data: tabs = [] } = api.database.listTabs.useQuery({ connectionId });
 
+	// Ensure selected tab is valid; fallback to uncategorized if deleted
+	useEffect(() => {
+		if (selectedTabId !== "uncategorized") {
+			const exists = tabs.some(t => String(t.id) === selectedTabId);
+			if (!exists) {
+				setSelectedTabId("uncategorized");
+			}
+		}
+	}, [tabs, selectedTabId]);
+
 	// Fetch existing query
 	const { data: existingQuery, isLoading: isLoadingQuery } =
 		api.database.getSavedQuery.useQuery(
@@ -81,28 +92,35 @@ export default function QueryEditPage() {
 	const utils = api.useUtils();
 
 	// Update saved query mutation
-	const updateQueryMutation = api.database.updateSavedQuery.useMutation({
-		onSuccess: () => {
-			void utils.database.listSavedQueries.invalidate();
-			void utils.database.getSavedQuery.invalidate({ id: Number(queryId) });
-		},
-	});
+	const updateQueryMutation = api.database.updateSavedQuery.useMutation(
+		useMutationFactory({
+			disableErrorToast: true, // Handle in executeSavedQueryMutation
+			onSuccess: () => {
+				void utils.database.listSavedQueries.invalidate();
+				void utils.database.getSavedQuery.invalidate({ id: Number(queryId) });
+			},
+		})
+	);
 
 	// Execute saved query mutation
-	const executeSavedQueryMutation = api.database.executeSavedQuery.useMutation({
-		onSuccess: data => {
-			setResult(data.result);
-			setExecutionTime(data.executionTimeMs);
-			setError(null);
-			setIsExecuting(false);
-			void utils.database.listSavedQueries.invalidate();
-		},
-		onError: err => {
-			setError(err.message);
-			setResult(null);
-			setIsExecuting(false);
-		},
-	});
+	const executeSavedQueryMutation = api.database.executeSavedQuery.useMutation(
+		useMutationFactory({
+			successMessage: "Query executed",
+			onSuccess: data => {
+				if (!data) return;
+				setResult(data.result);
+				setExecutionTime(data.executionTimeMs);
+				setError(null);
+				setIsExecuting(false);
+				void utils.database.listSavedQueries.invalidate();
+			},
+			onError: err => {
+				setError(err.message);
+				setResult(null);
+				setIsExecuting(false);
+			},
+		})
+	);
 
 	const handleExecute = () => {
 		if (!queryText.trim() || !queryId) return;

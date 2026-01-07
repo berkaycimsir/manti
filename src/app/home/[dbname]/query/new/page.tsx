@@ -57,6 +57,7 @@ export default function NewQueryPage() {
 	const executeQueryMutation = api.database.executeQuery.useMutation(
 		useMutationFactory({
 			onSuccess: data => {
+				if (!data) return;
 				setResult(data);
 				setError(null);
 				setIsExecuting(false);
@@ -74,6 +75,7 @@ export default function NewQueryPage() {
 		useMutationFactory({
 			successMessage: "Query saved and executed",
 			onSuccess: data => {
+				if (!data) return;
 				setResult(data.result);
 				setExecutionTime(data.executionTimeMs);
 				setError(null);
