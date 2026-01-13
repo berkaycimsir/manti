@@ -1,16 +1,16 @@
-import { neon } from "@neondatabase/serverless";
-import { type NeonHttpClient, drizzle } from "drizzle-orm/neon-http";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 import { env } from "~/env";
 import * as schema from "./schema";
 
 /**
- * Cache the Neon client in development to avoid creating a new connection on every HMR update.
+ * Cache the database client in development to avoid creating a new connection on every HMR update.
  */
-const globalForNeon = globalThis as unknown as {
-	neonClient?: NeonHttpClient;
+const globalForDb = globalThis as unknown as {
+	dbClient?: ReturnType<typeof postgres>;
 };
 
-globalForNeon.neonClient ??= neon(env.DATABASE_URL);
+globalForDb.dbClient ??= postgres(env.DATABASE_URL);
 
-export const db = drizzle({ client: globalForNeon.neonClient, schema });
+export const db = drizzle({ client: globalForDb.dbClient, schema });

@@ -1,0 +1,55 @@
+# Docker Compose for Manti with PostgreSQL
+# 
+# Usage:
+#   Production:  docker compose up manti -d
+#   Development: docker compose up manti-dev -d
+#   Database UI: docker compose up adminer -d
+#
+# Note: Run either 'manti' OR 'manti-dev', not both (they use the same port)
+
+services:
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"  # Changed to 5433 to avoid conflict with local postgres
+    command: ["postgres", "-c", "log_statement=all"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "postgres"]
+    restart: unless-stopped
+    networks:
+      - default_network
+
+  manti:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/postgres
+      NODE_ENV: production
+      ENCRYPTION_KEY: manti-default-encryption-key-change-me!
+      BETTER_AUTH_SECRET: manti-default-auth-secret-change-me!!
+      NEXT_PUBLIC_BETTER_AUTH_URL: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - default_network
+
+volumes:
+  postgres_data:
+
+networks:
+  default_network:
+    name: talx-dev

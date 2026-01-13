@@ -6,6 +6,7 @@ import { ConnectionGridSkeleton } from "@shared/components/ui/content-skeletons"
 import { useHeader } from "@shared/hooks/use-header";
 import { useMutationFactory } from "@shared/hooks/use-mutation-factory";
 import { CONNECTION_CLEANUP_INTERVAL } from "@shared/lib/constants";
+import { useThemeStore } from "@shared/stores/theme-store";
 import { Database } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -28,6 +29,12 @@ export default function HomePage() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const { viewMode, sortOption } = useHomeViewStore();
 	const utils = api.useUtils();
+	const setOverrideColor = useThemeStore(state => state.setOverrideColor);
+
+	// Clear any connection-specific theme override when on home page
+	useEffect(() => {
+		setOverrideColor(null);
+	}, [setOverrideColor]);
 
 	// Set up header
 	useHeader({
