@@ -25,22 +25,6 @@ interface TextFieldProps {
 }
 
 /**
- * Generate a deterministic HSL color based on column name hash.
- * Same column always gets the same color.
- */
-function getColumnColor(columnName: string, isDark: boolean): string {
-	let hash = 0;
-	for (let i = 0; i < columnName.length; i++) {
-		hash = columnName.charCodeAt(i) + ((hash << 5) - hash);
-	}
-	const hue = Math.abs(hash % 360);
-	const saturation = 65;
-	const lightness = isDark ? 70 : 35;
-
-	return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-}
-
-/**
  * Format value for display - uses formattedValue which includes transformations
  */
 function formatDisplayValue(value: unknown, formattedValue: string): string {
@@ -71,13 +55,11 @@ function ColumnName({
 	tableName,
 	columnName,
 	originalColumnName,
-	isDark,
 }: {
 	dbName?: string;
 	tableName?: string;
 	columnName: string;
 	originalColumnName: string;
-	isDark: boolean;
 }) {
 	const storedColor = useTableColumnStore(state =>
 		dbName && tableName
@@ -93,7 +75,7 @@ function ColumnName({
 		<span
 			style={{ color: color }}
 			className={cn(
-				"flex-shrink-0 font-medium",
+				"shrink-0 font-medium",
 				!color && "text-muted-foreground"
 			)}
 		>
@@ -116,11 +98,6 @@ export function TextField({
 }: TextFieldProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [copied, setCopied] = useState(false);
-
-	// Detect dark mode from CSS
-	const isDark =
-		typeof window !== "undefined" &&
-		window.matchMedia("(prefers-color-scheme: dark)").matches;
 
 	const displayValue = useMemo(
 		() => formatDisplayValue(value, formattedValue),
@@ -156,9 +133,8 @@ export function TextField({
 					tableName={tableName}
 					columnName={columnName}
 					originalColumnName={originalColumnName || columnName}
-					isDark={isDark}
 				/>
-				<span className="flex-shrink-0 text-muted-foreground">:</span>
+				<span className="shrink-0 text-muted-foreground">:</span>
 				<span className="text-muted-foreground italic">∅</span>
 			</span>
 		);
@@ -171,7 +147,6 @@ export function TextField({
 				tableName={tableName}
 				columnName={columnName}
 				originalColumnName={originalColumnName || columnName}
-				isDark={isDark}
 			/>
 			<span className="mr-1 text-muted-foreground">:</span>
 
@@ -226,7 +201,7 @@ export function TextField({
 					className={cn(
 						"text-foreground",
 						wordWrap
-							? "whitespace-pre-wrap break-words [overflow-wrap:anywhere]"
+							? "wrap-anywhere whitespace-pre-wrap"
 							: "whitespace-nowrap"
 					)}
 				>

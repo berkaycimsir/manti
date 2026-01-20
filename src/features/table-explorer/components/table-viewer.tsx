@@ -528,6 +528,7 @@ export const AdvancedTableViewer = forwardRef<
 						visibleColumnsArray={visibleColumnsArray}
 						densityMode={densityMode}
 						zebraStriping={zebraStriping}
+						wordWrap={wordWrap}
 						showNullDistinct={showNullDistinct}
 						fullWidth={fullWidth}
 						maxCharacters={maxCharacters}

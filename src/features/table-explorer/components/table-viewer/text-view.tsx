@@ -127,7 +127,7 @@ export function TextView({
 												return (
 													<div
 														key={`${rowKey}-${col.name}`}
-														className="flex-shrink-0 overflow-hidden"
+														className="shrink-0 overflow-hidden"
 														style={{ width: columnWidths[col.name] }}
 													>
 														<TextField
