@@ -21,16 +21,24 @@ interface TextViewAppearanceDropdownProps {
 	columns: Column[];
 }
 
-export function TextViewAppearanceDropdown({
+export function   TextViewAppearanceDropdown({
 	dbName,
 	tableName,
 	columns,
 }: TextViewAppearanceDropdownProps) {
 	const [searchQuery, setSearchQuery] = useState("");
 	const setColumnColor = useTableColumnStore(state => state.setColumnColor);
+	
+	// Memoize the key to avoid recreating it
+	const storeKey = useMemo(() => `${dbName}-${tableName}`, [dbName, tableName]);
+	
+	// Select columnColors directly without defaulting to {} in the selector
 	const columnColors = useTableColumnStore(
-		state => state.columnColors[`${dbName}-${tableName}`] || {}
+		state => state.columnColors[storeKey]
 	);
+	
+	// Use an empty object only when needed for lookups (not in the selector)
+	const safeColumnColors = columnColors || {};
 
 	const filteredColumns = useMemo(() => {
 		if (!searchQuery) return columns;
@@ -75,7 +83,7 @@ export function TextViewAppearanceDropdown({
 									<span
 										className="flex-1 truncate font-medium text-sm"
 										style={{
-											color: columnColors[col.name],
+											color: safeColumnColors[col.name],
 											// If no color selected, use default text color but maybe slightly muted to indicate "default" in list?
 											// actually let's keep it inheriting
 										}}
@@ -89,7 +97,7 @@ export function TextViewAppearanceDropdown({
 										>
 											<input
 												type="color"
-												value={columnColors[col.name] || "#000000"}
+												value={safeColumnColors[col.name] || "#000000"}
 												onChange={e =>
 													setColumnColor(
 														dbName,
@@ -106,11 +114,11 @@ export function TextViewAppearanceDropdown({
 												className="h-full w-full"
 												style={{
 													backgroundColor:
-														columnColors[col.name] || "transparent",
+														safeColumnColors[col.name] || "transparent",
 												}}
 											/>
 											{/* Show a pseudo-color wheel or placeholder if transparent/default */}
-											{!columnColors[col.name] && (
+									{!safeColumnColors[col.name] && (
 												<div
 													className="h-full w-full opacity-75"
 													style={{
@@ -127,7 +135,7 @@ export function TextViewAppearanceDropdown({
 											onClick={() =>
 												setColumnColor(dbName, tableName, col.name, null)
 											}
-											disabled={!columnColors[col.name]}
+											disabled={!safeColumnColors[col.name]}
 											title="Reset to default"
 										>
 											<RotateCcw className="h-3 w-3" />

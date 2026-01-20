@@ -61,10 +61,10 @@ function ColumnName({
 	columnName: string;
 	originalColumnName: string;
 }) {
-	const storedColor = useTableColumnStore(state =>
-		dbName && tableName
-			? state.getColumnColor(dbName, tableName, originalColumnName)
-			: undefined
+	// Select the color directly from the store state to avoid infinite re-renders
+	const key = dbName && tableName ? `${dbName}-${tableName}` : "";
+	const storedColor = useTableColumnStore(
+		state => state.columnColors[key]?.[originalColumnName]
 	);
 
 	// Default now mimics secondary foreground (usually darker gray or white) or just inherits
@@ -74,10 +74,7 @@ function ColumnName({
 	return (
 		<span
 			style={{ color: color }}
-			className={cn(
-				"shrink-0 font-medium",
-				!color && "text-muted-foreground"
-			)}
+			className={cn("shrink-0 font-medium", !color && "text-muted-foreground")}
 		>
 			{columnName}
 		</span>
@@ -200,9 +197,7 @@ export function TextField({
 				<span
 					className={cn(
 						"text-foreground",
-						wordWrap
-							? "wrap-anywhere whitespace-pre-wrap"
-							: "whitespace-nowrap"
+						wordWrap ? "wrap-anywhere whitespace-pre-wrap" : "whitespace-nowrap"
 					)}
 				>
 					{displayContent}
