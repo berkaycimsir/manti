@@ -9,5 +9,6 @@ export { TableFooter } from "./table-footer";
 export { ViewModeToggle } from "./view-mode-toggle";
 export { DensityDropdown } from "./density-dropdown";
 export { DisplayOptionsDropdown } from "./display-options-dropdown";
+export { TextViewAppearanceDropdown } from "./text-view-appearance-dropdown";
 export { ColumnVisibilityDropdown } from "./column-visibility-dropdown";
 export { ColumnStatsPopover } from "./column-stats-popover";

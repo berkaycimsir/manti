@@ -15,6 +15,7 @@ interface TextViewProps {
 	visibleColumnsArray: Column[];
 	densityMode: DensityMode;
 	zebraStriping: boolean;
+	wordWrap: boolean;
 	showNullDistinct: boolean;
 	fullWidth: boolean;
 	maxCharacters: number;
@@ -26,12 +27,13 @@ interface TextViewProps {
 }
 
 export function TextView({
-	dbName: _dbName,
-	tableName: _tableName,
+	dbName,
+	tableName,
 	sortedRows,
 	visibleColumnsArray,
 	densityMode,
 	zebraStriping,
+	wordWrap,
 	showNullDistinct,
 	fullWidth,
 	maxCharacters,
@@ -129,12 +131,15 @@ export function TextView({
 														style={{ width: columnWidths[col.name] }}
 													>
 														<TextField
+															dbName={dbName}
+															tableName={tableName}
 															columnName={col.name}
 															value={value}
 															maxCharacters={maxCharacters}
 															formattedValue={formattedValue}
 															isNull={isNull}
 															showNullDistinct={showNullDistinct}
+															wordWrap={wordWrap}
 														/>
 													</div>
 												);
@@ -192,12 +197,16 @@ export function TextView({
 											return (
 												<div key={`${rowKey}-${col.name}`} className="flex">
 													<TextField
+														dbName={dbName}
+														tableName={tableName}
 														columnName={paddedName}
+														originalColumnName={col.name} // Pass original name for store lookup
 														value={value}
 														maxCharacters={maxCharacters}
 														formattedValue={formattedValue}
 														isNull={isNull}
 														showNullDistinct={showNullDistinct}
+														wordWrap={wordWrap}
 													/>
 												</div>
 											);
@@ -218,7 +227,13 @@ export function TextView({
 									"px-4"
 								)}
 							>
-								<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+								{/* wordWrap: wrap text inline. No wordWrap: flex-wrap items */}
+								<div
+									className={cn(
+										"text-sm",
+										"flex flex-wrap items-center gap-x-3 gap-y-1"
+									)}
+								>
 									{visibleColumnsArray.map((col, colIndex) => {
 										const value = row[col.name];
 										const formattedValue = formatValue(value, col.name);
@@ -227,18 +242,26 @@ export function TextView({
 										return (
 											<span
 												key={`${rowKey}-${col.name}`}
-												className="inline-flex items-center"
+												className={cn(
+													"inline-flex items-center",
+													// When wordWrap is on, constrain max width so values break
+													wordWrap && "max-w-full flex-wrap"
+												)}
 											>
 												<TextField
+													dbName={dbName}
+													tableName={tableName}
 													columnName={col.name}
 													value={value}
 													maxCharacters={maxCharacters}
 													formattedValue={formattedValue}
 													isNull={isNull}
 													showNullDistinct={showNullDistinct}
+													wordWrap={wordWrap}
 												/>
+												{/* Comma is part of the span */}
 												{colIndex < visibleColumnsArray.length - 1 && (
-													<span className="ml-2 text-muted-foreground/50">
+													<span className="mr-1 text-muted-foreground/50">
 														,
 													</span>
 												)}

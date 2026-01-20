@@ -27,10 +27,10 @@ export default function SettingsPage() {
 	);
 
 	return (
-		<div className="container mx-auto max-w-7xl py-6">
+		<div className="container mx-auto max-w-5xl py-6">
 			<Tabs defaultValue="profile" className="w-full">
 				<div className="flex min-h-[500px] flex-col overflow-hidden rounded-xl border bg-background shadow-sm lg:flex-row">
-					<div className="w-full border-r-0 border-b bg-muted/30 lg:w-[210px] lg:border-r lg:border-b-0">
+					<div className="w-full border-r-0 border-b bg-muted/30 lg:w-[200px] lg:border-r lg:border-b-0">
 						<SettingsSidebar className="w-full lg:w-full" />
 					</div>
 

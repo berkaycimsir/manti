@@ -35,6 +35,7 @@ import {
 	ColumnVisibilityDropdown,
 	DensityDropdown,
 	DisplayOptionsDropdown,
+	TextViewAppearanceDropdown,
 	GridView,
 	TableFooter,
 	TableHeader,
@@ -425,6 +426,15 @@ export const AdvancedTableViewer = forwardRef<
 						onMaxCharactersChange={setMaxCharacters}
 						onAlignmentModeChange={setAlignmentMode}
 					/>
+
+					{/* Text View Colors */}
+					{viewMode === "text" && (
+						<TextViewAppearanceDropdown
+							dbName={dbName}
+							tableName={tableName}
+							columns={visibleColumnsArray}
+						/>
+					)}
 
 					{/* Selected rows actions */}
 					{selectedRows.size > 0 && (
