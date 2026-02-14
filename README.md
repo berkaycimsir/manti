@@ -1,6 +1,4 @@
 # Manti
-text icin zebra stripping, columnlar icin her biri icin ayri renk, word-wrap
-A modern web-based PostgreSQL Database Manager built with Next.js, tRPC, and Drizzle ORM.
 
 ## Tech Stack
 
